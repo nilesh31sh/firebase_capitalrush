@@ -1,0 +1,79 @@
+/* Sidebar.css */
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 250px;
+    height: 100%;
+    background-color: #7e95d8; /* Light background for the sidebar */
+    color: #7e95d8;
+    padding: 1rem;
+    box-shadow: 2px 0 5px rgba(245, 164, 164, 0.1); /* Soft shadow for depth */
+    transition: transform 0.3s ease;
+    transform: translateX(-100%); /* Start off-screen */
+    z-index: 1000; /* Ensure it's above other content */
+    overflow-y: auto; /* Enable scroll if content is too long */
+  }
+  
+  .sidebar.open {
+    transform: translateX(0); /* Slide in */
+  }
+  
+  .toggle-button {
+    position: fixed; /* Fixed position for the floating toggle button */
+    top: 50%; /* Center vertically */
+    left: 0; /* Start at the left edge of the viewport */
+    transform: translateY(-50%) translateX(-100%); /* Initially hide it behind the left edge */
+    /* The translateX(-100%) will move it left by its own width, hiding it */
+    background-color: #333; /* Dark background for the button */
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.25rem; /* Rounded corners for the button */
+    font-size: 1.5rem; /* Larger arrow icons */
+    z-index: 1001; /* Above the sidebar */
+    transition: transform 0.3s ease, left 0.3s ease;
+  }
+
+  .sidebar.open .toggle-button {
+    transform: translateY(-50%) rotate(0deg); /* Arrow points inwards */
+    left: 14rem; /* Position the button to the right of the sidebar */
+  }
+  
+  .sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin-top: 2rem; /* Extra space at the top */
+  }
+  
+  .sidebar-menu li {
+    padding: 0.5rem 0; /* Vertical padding for list items */
+    border-bottom: 1px solid #e1e1e1; /* Separator for items */
+  }
+  
+  .sidebar-menu li a {
+    text-decoration: none;
+    color: #333;
+    display: block; /* Make the link fill the list item */
+    transition: color 0.2s ease;
+  }
+  
+  .sidebar-menu li a:hover {
+    color: #007bff; /* Highlight color on hover */
+  }
+  
+  /* Style adjustments for the content when the sidebar opens */
+  .app-content {
+    transition: margin-left 0.3s ease;
+  }
+  
+  .app-container.sidebar-open .app-content {
+    margin-left: 250px; /* Push content to the right */
+  }
+  
+  .app-container:not(.sidebar-open) .toggle-button {
+    transform: translateY(-50%) translateX(0%); /* Partially peeking out */
+  }
+  
