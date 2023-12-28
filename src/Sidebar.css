@@ -66,8 +66,12 @@
   
   /* Style adjustments for the content when the sidebar opens */
   .app-content {
-    transition: margin-left 0.3s ease;
+    /* existing styles */
+    overflow-y: auto; /* Allow vertical scrolling */
+    height: 100vh; /* Adjust height as necessary, vh units for viewport height */
+    padding-bottom: 20px; /* Optional: Add some padding at the bottom */
   }
+  
   
   .app-container.sidebar-open .app-content {
     margin-left: 250px; /* Push content to the right */

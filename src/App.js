@@ -7,6 +7,8 @@ import ContestantsView from './ContestantsView';
 import UserDisplay from './UsersDisplay'; 
 import UserContestsView from './UserContestsView';
 import CreateContestPage from './CreateContestPage';
+import ReportDisplay from './ReportDisplay';
+
 import './App.css';
 
 function App() {
@@ -30,6 +32,7 @@ function App() {
             <Route path="/users" element={<UserDisplay />} />
             <Route path="/users/:userId/:contestType" element={<UserContestsView />} />
             <Route path="/create-contest" element={<CreateContestPage />} />
+            <Route path="/reports" element={<ReportDisplay />} />
             {/* Add other routes as necessary */}
           </Routes>
         </div>
