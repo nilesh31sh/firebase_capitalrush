@@ -1,67 +1,75 @@
-/* ContestDisplay.css */
-.contest-details {
+/* General styling for the contestDisplay component */
+.ContestDisplay {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Updated font for modern look */
   padding: 20px;
-  font-family: Arial, sans-serif;
+  color: #333;
+  background-color: #f9f9f9; /* Light background for the container */
+  border-radius: 8px; /* Rounded corners for the container */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
 }
 
-h2 {
-  font-size: 24px;
-  margin-bottom: 20px;
-}
-
+/* Table styles */
 .contest-table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Shadow for the table */
 }
 
-.contest-table th, .contest-table td {
+.contest-table th,
+.contest-table td {
   border: 1px solid #ddd;
   padding: 8px;
   text-align: left;
 }
 
 .contest-table th {
-  background-color: #f2f2f2;
-  font-weight: bold;
+  background-color: #4CAF50; /* Darker shade for headers */
+  color: white; /* White text for headers */
+  font-weight: normal;
 }
 
+/* Row styling for hover effect */
+.contest-table tr:nth-child(even) {background-color: #f2f2f2;}
+.contest-table tr:hover {background-color: #c8e6c9;} /* Light green for hover */
+
+/* Pagination styles */
 .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
   margin-top: 20px;
+  flex-wrap: wrap; /* Wrap buttons in smaller screens */
 }
 
 .pagination button {
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  padding: 8px 16px;
+  border: 1px solid #ddd;
+  padding: 5px 10px;
   margin: 0 5px;
   cursor: pointer;
-  border-radius: 4px;
-  font-weight: bold;
-  transition: background-color 0.3s;
+  background-color: white;
+  transition: background-color 0.3s, transform 0.3s;
+  border-radius: 4px; /* Rounded corners for buttons */
 }
 
+.pagination button:hover,
 .pagination button.active {
-  background-color: #0056b3;
+  background-color: #4CAF50; /* Green background for active/hover state */
+  color: white; /* White text for active/hover state */
+  transform: translateY(-2px); /* Slight lift effect on hover */
 }
 
-.pagination button:hover {
-  background-color: #0056b3;
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .contest-table {
+      width: 100%;
+      overflow-x: auto;
+  }
+  .pagination {
+      width: 100%;
+      padding: 10px;
+  }
+  .contestDisplay {
+      padding: 10px;
+  }
 }
-
-/* Style the link inside the table cell */
-.contest-table td a {
-  color: #007bff;
-  text-decoration: none;
-}
-
-/* Style the link on hover */
-.contest-table td a:hover {
-  text-decoration: underline;
-}
-
-/* Add additional styles as needed */
