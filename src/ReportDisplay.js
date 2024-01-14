@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { database } from './firebase';
 import { ref, onValue, update } from 'firebase/database';
 import './ReportDisplay.css';
 
 const ReportDisplay = () => {
-  const [reports, setReports] = useState({}); // Stores the reports keyed by their Firebase IDs
-  const [headers, setHeaders] = useState([]); // Stores the headers for the table
+  const [reports, setReports] = useState({});
+  const [headers, setHeaders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [reportsPerPage] = useState(10);
+  const [statusFilter, setStatusFilter] = useState(''); // New state for status filter
 
   useEffect(() => {
     const reportsRef = ref(database, 'HELP_REPORT');
@@ -16,14 +19,13 @@ const ReportDisplay = () => {
       if (reportsData) {
         setReports(reportsData);
 
-        // Extract all unique keys from all reports
-        const allKeys = new Set(['status']); // Initialize with 'status' to ensure it's included
+        const allKeys = new Set(['status']);
         Object.values(reportsData).forEach(report => {
           Object.keys(report).forEach(key => {
             allKeys.add(key);
           });
         });
-        setHeaders([...allKeys]); // Convert the Set to an array and update the state
+        setHeaders([...allKeys]);
       }
       setLoading(false);
     }, (errorObject) => {
@@ -33,8 +35,36 @@ const ReportDisplay = () => {
   }, []);
 
   const handleStatusChange = (reportId, newStatus) => {
-    // Update the status of the specific report in Firebase
     update(ref(database, `/HELP_REPORT/${reportId}`), { status: newStatus });
+  };
+
+  const filteredReports = useMemo(() => {
+    return statusFilter
+      ? Object.entries(reports).filter(([id, report]) => report.status === statusFilter)
+      : Object.entries(reports);
+  }, [reports, statusFilter]);
+
+  const indexOfLastReport = currentPage * reportsPerPage;
+  const indexOfFirstReport = indexOfLastReport - reportsPerPage;
+  const currentReports = useMemo(() => {
+    return filteredReports.slice(indexOfFirstReport, indexOfLastReport);
+  }, [filteredReports, indexOfFirstReport, indexOfLastReport]);
+
+  const headersMemo = useMemo(() => {
+    return headers.map(header => {
+      return { name: header, isBoolean: typeof reports[Object.keys(reports)[0]][header] === 'boolean' };
+    });
+  }, [headers, reports]);
+
+  const paginate = pageNumber => setCurrentPage(pageNumber);
+  const pageNumbers = [];
+  for (let i = 1; i <= Math.ceil(filteredReports.length / reportsPerPage); i++) {
+    pageNumbers.push(i);
+  }
+
+  const handleStatusFilterChange = (event) => {
+    setStatusFilter(event.target.value);
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   if (loading) return <div className="loading">Loading reports...</div>;
@@ -43,22 +73,34 @@ const ReportDisplay = () => {
   return (
     <div className="report-display-container">
       <h2>Help Reports</h2>
+      <div className="filter-container">
+        <label htmlFor="statusFilter">Filter by Status: </label>
+        <select
+          id="statusFilter"
+          value={statusFilter}
+          onChange={handleStatusFilterChange}
+        >
+          <option value="">All</option>
+          <option value="Ongoing">Ongoing</option>
+          <option value="Complete">Complete</option>
+        </select>
+      </div>
       <table className="report-table">
         <thead>
           <tr>
-            {headers.map(header => (
-              <th key={header}>{header}</th>
+            {headersMemo.map(({ name }) => (
+              <th key={name}>{name}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {Object.entries(reports).map(([id, report]) => (
+          {currentReports.map(([id, report]) => (
             <tr key={id}>
-              {headers.map(header => (
-                <td key={`${id}-${header}`}>
-                  {header === 'status' ? (
+              {headersMemo.map(({ name, isBoolean }) => (
+                <td key={`${id}-${name}`}>
+                  {name === 'status' ? (
                     <select
-                      className="status-dropdown" // Add class for styling
+                      className="status-dropdown"
                       value={report.status || ''}
                       onChange={(e) => handleStatusChange(id, e.target.value)}
                     >
@@ -66,8 +108,10 @@ const ReportDisplay = () => {
                       <option value="Ongoing">Ongoing</option>
                       <option value="Complete">Complete</option>
                     </select>
+                  ) : isBoolean ? (
+                    report[name] ? 'True' : 'False'
                   ) : (
-                    report[header] || ''
+                    report[name] || ''
                   )}
                 </td>
               ))}
@@ -75,6 +119,17 @@ const ReportDisplay = () => {
           ))}
         </tbody>
       </table>
+      <nav>
+        <ul className="pagination">
+          {pageNumbers.map(number => (
+            <li key={number} className="page-item">
+              <a onClick={() => paginate(number)} className="page-link">
+                {number}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </div>
   );
 };
