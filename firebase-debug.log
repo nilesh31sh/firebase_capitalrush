@@ -1,34 +1,33 @@
-[debug] [2024-01-16T18:52:49.653Z] ----------------------------------------------------------------------
-[debug] [2024-01-16T18:52:49.656Z] Command:       /opt/homebrew/Cellar/node/21.4.0/bin/node /opt/homebrew/bin/firebase serve
-[debug] [2024-01-16T18:52:49.656Z] CLI Version:   13.0.3
-[debug] [2024-01-16T18:52:49.656Z] Platform:      darwin
-[debug] [2024-01-16T18:52:49.656Z] Node Version:  v21.4.0
-[debug] [2024-01-16T18:52:49.656Z] Time:          Tue Jan 16 2024 13:52:49 GMT-0500 (Eastern Standard Time)
-[debug] [2024-01-16T18:52:49.656Z] ----------------------------------------------------------------------
+[debug] [2024-01-16T19:01:43.388Z] ----------------------------------------------------------------------
+[debug] [2024-01-16T19:01:43.393Z] Command:       /opt/homebrew/Cellar/node/21.4.0/bin/node /opt/homebrew/bin/firebase serve
+[debug] [2024-01-16T19:01:43.393Z] CLI Version:   13.0.3
+[debug] [2024-01-16T19:01:43.393Z] Platform:      darwin
+[debug] [2024-01-16T19:01:43.393Z] Node Version:  v21.4.0
+[debug] [2024-01-16T19:01:43.393Z] Time:          Tue Jan 16 2024 14:01:43 GMT-0500 (Eastern Standard Time)
+[debug] [2024-01-16T19:01:43.393Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2024-01-16T18:52:49.717Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2024-01-16T18:52:49.717Z] > authorizing via signed-in user (404amansa@gmail.com)
-[debug] [2024-01-16T18:52:49.717Z] [iam] checking project capitalrush-77e1a for permissions ["firebase.projects.get"]
-[debug] [2024-01-16T18:52:49.718Z] > refreshing access token with scopes: []
-[debug] [2024-01-16T18:52:49.719Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
-[debug] [2024-01-16T18:52:49.719Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
-[debug] [2024-01-16T18:52:49.807Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
-[debug] [2024-01-16T18:52:49.807Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
-[debug] [2024-01-16T18:52:49.817Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/capitalrush-77e1a:testIamPermissions [none]
-[debug] [2024-01-16T18:52:49.817Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/capitalrush-77e1a:testIamPermissions x-goog-quota-user=projects/capitalrush-77e1a
-[debug] [2024-01-16T18:52:49.818Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/capitalrush-77e1a:testIamPermissions {"permissions":["firebase.projects.get"]}
-[debug] [2024-01-16T18:52:49.921Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/capitalrush-77e1a:testIamPermissions 200
-[debug] [2024-01-16T18:52:49.922Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/capitalrush-77e1a:testIamPermissions {"permissions":["firebase.projects.get"]}
-[debug] [2024-01-16T18:52:49.922Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a [none]
-[debug] [2024-01-16T18:52:50.184Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a 200
-[debug] [2024-01-16T18:52:50.184Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a {"projectId":"capitalrush-77e1a","projectNumber":"494460990422","displayName":"CapitalRush","name":"projects/capitalrush-77e1a","resources":{"hostingSite":"capitalrush-77e1a","realtimeDatabaseInstance":"capitalrush-77e1a-default-rtdb"},"state":"ACTIVE","etag":"1_dc8208c3-446e-4c95-a568-a6af4578a28a"}
+[debug] [2024-01-16T19:01:43.451Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2024-01-16T19:01:43.451Z] > authorizing via signed-in user (404amansa@gmail.com)
+[debug] [2024-01-16T19:01:43.451Z] [iam] checking project capitalrush-77e1a for permissions ["firebase.projects.get"]
+[debug] [2024-01-16T19:01:43.452Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/capitalrush-77e1a:testIamPermissions [none]
+[debug] [2024-01-16T19:01:43.452Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/capitalrush-77e1a:testIamPermissions x-goog-quota-user=projects/capitalrush-77e1a
+[debug] [2024-01-16T19:01:43.452Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/capitalrush-77e1a:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2024-01-16T19:01:43.540Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/capitalrush-77e1a:testIamPermissions 200
+[debug] [2024-01-16T19:01:43.540Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/capitalrush-77e1a:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2024-01-16T19:01:43.540Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a [none]
+[debug] [2024-01-16T19:01:43.691Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a 200
+[debug] [2024-01-16T19:01:43.691Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a {"projectId":"capitalrush-77e1a","projectNumber":"494460990422","displayName":"CapitalRush","name":"projects/capitalrush-77e1a","resources":{"hostingSite":"capitalrush-77e1a","realtimeDatabaseInstance":"capitalrush-77e1a-default-rtdb"},"state":"ACTIVE","etag":"1_dc8208c3-446e-4c95-a568-a6af4578a28a"}
 [info] 
 [info] === Serving from '/Users/amnx/Code/firebase_capitalrush'...
 [info] 
-[debug] [2024-01-16T18:52:50.186Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/capitalrush-77e1a/sites 
-[debug] [2024-01-16T18:52:50.872Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/capitalrush-77e1a/sites 200
-[debug] [2024-01-16T18:52:50.872Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/capitalrush-77e1a/sites {"sites":[{"name":"projects/capitalrush-77e1a/sites/capitalrush-77e1a","defaultUrl":"https://capitalrush-77e1a.web.app","type":"DEFAULT_SITE"},{"name":"projects/capitalrush-77e1a/sites/test222e2e","defaultUrl":"https://test222e2e.web.app","type":"USER_SITE"}]}
-[debug] [2024-01-16T18:52:50.872Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a/webApps/-/config [none]
-[debug] [2024-01-16T18:52:51.149Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a/webApps/-/config 200
-[debug] [2024-01-16T18:52:51.149Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a/webApps/-/config {"projectId":"capitalrush-77e1a","appId":"1:494460990422:web:d34947ee5894d3b83eaa77","databaseURL":"https://capitalrush-77e1a-default-rtdb.asia-southeast1.firebasedatabase.app","storageBucket":"capitalrush-77e1a.appspot.com","apiKey":"AIzaSyAIT9FdTjvu1kSUJNl5lb7wyZtU3cuuWK0","authDomain":"capitalrush-77e1a.firebaseapp.com","messagingSenderId":"494460990422","measurementId":"G-JJWN43PQYC"}
-[debug] [2024-01-16T18:52:51.157Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a [none]
+[debug] [2024-01-16T19:01:43.694Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/capitalrush-77e1a/sites 
+[debug] [2024-01-16T19:01:44.274Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/capitalrush-77e1a/sites 200
+[debug] [2024-01-16T19:01:44.274Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/capitalrush-77e1a/sites {"sites":[{"name":"projects/capitalrush-77e1a/sites/capitalrush-77e1a","defaultUrl":"https://capitalrush-77e1a.web.app","type":"DEFAULT_SITE"},{"name":"projects/capitalrush-77e1a/sites/test222e2e","defaultUrl":"https://test222e2e.web.app","type":"USER_SITE"}]}
+[debug] [2024-01-16T19:01:44.275Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a/webApps/-/config [none]
+[debug] [2024-01-16T19:01:44.589Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a/webApps/-/config 200
+[debug] [2024-01-16T19:01:44.589Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a/webApps/-/config {"projectId":"capitalrush-77e1a","appId":"1:494460990422:web:d34947ee5894d3b83eaa77","databaseURL":"https://capitalrush-77e1a-default-rtdb.asia-southeast1.firebasedatabase.app","storageBucket":"capitalrush-77e1a.appspot.com","apiKey":"AIzaSyAIT9FdTjvu1kSUJNl5lb7wyZtU3cuuWK0","authDomain":"capitalrush-77e1a.firebaseapp.com","messagingSenderId":"494460990422","measurementId":"G-JJWN43PQYC"}
+[debug] [2024-01-16T19:01:44.598Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a [none]
+[debug] [2024-01-16T19:01:44.720Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a 200
+[debug] [2024-01-16T19:01:44.721Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/capitalrush-77e1a {"projectId":"capitalrush-77e1a","projectNumber":"494460990422","displayName":"CapitalRush","name":"projects/capitalrush-77e1a","resources":{"hostingSite":"capitalrush-77e1a","realtimeDatabaseInstance":"capitalrush-77e1a-default-rtdb"},"state":"ACTIVE","etag":"1_dc8208c3-446e-4c95-a568-a6af4578a28a"}
+[info] i  hosting[test222e2e]: Serving hosting files from: build {"metadata":{"emulator":{"name":"hosting"},"message":"Serving hosting files from: \u001b[1mbuild\u001b[22m"}}
+[info] ✔  hosting[test222e2e]: Local server: http://localhost:5002 {"metadata":{"emulator":{"name":"hosting"},"message":"Local server: \u001b[4m\u001b[1mhttp://localhost:5002\u001b[22m\u001b[24m"}}
