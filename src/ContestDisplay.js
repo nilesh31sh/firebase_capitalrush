@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { database } from './firebase';
 import { ref, onValue } from 'firebase/database';
 import './ContestDisplay.css';
-import { Tooltip as ReactTooltip } from 'react-tooltip';
 
 
 
@@ -142,6 +141,7 @@ const ContestDisplay = () => {
   return (
     <div>
       <h2>Contest Details</h2>
+      <div className="table-container">
       <table {...getTableProps()} className="contest-table">
         <thead>
           {headerGroups.map(headerGroup => (
@@ -178,6 +178,7 @@ const ContestDisplay = () => {
             {pageIndex + 1} of {pageOptions.length}
           </strong>{' '}
         </span>
+      </div>
       </div>
     </div>
   );

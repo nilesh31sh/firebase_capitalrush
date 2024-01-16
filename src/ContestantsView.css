@@ -1,5 +1,5 @@
 .table-container {
-  max-height: 400px; /* Adjust this value as needed */
+  max-height: 100%; /* Adjust this value as needed */
   overflow: auto; /* Enables scrolling */
   margin-top: 40px; /* Added margin to the top of the table container */
 }

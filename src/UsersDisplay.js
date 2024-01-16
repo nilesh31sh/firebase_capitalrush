@@ -14,10 +14,13 @@ const UserDisplay = () => {
     const userRef = ref(database, 'USERS');
     const unsubscribe = onValue(userRef, (snapshot) => {
       const snapshotData = snapshot.val() || {};
-      const formattedData = Object.entries(snapshotData).map(([id, entry]) => ({
-        id,
-        ...entry
-      }));
+      const formattedData = Object.entries(snapshotData)
+        .map(([id, entry]) => ({
+          id,
+          ...entry
+        }))
+        .sort((a, b) => (b.IsRequestingWithdrawal === true) ? 1 : -1); // Sorting logic
+
       setData(formattedData);
       setLoading(false);
     }, (error) => {
@@ -27,6 +30,7 @@ const UserDisplay = () => {
 
     return () => unsubscribe();
   }, []);
+
 
 
 
@@ -51,38 +55,53 @@ const UserDisplay = () => {
         accessor: 'myContestsCompleted',
         Cell: ({ row }) => <Link to={`/users/${row.original.id}/myContestsCompleted`}>View Contests</Link>,
       },
+      {
+        Header: 'Is Requesting Withdrawal',
+        accessor: 'IsRequestingWithdrawal',
+        // its a boolean
+        Cell: ({ value }) => value ? 'True' : 'False'
+      },
+      {
+        Header: 'Withdrawal Amount',
+        accessor: 'WithdrawalAmount',
+      },
+      {
+        Header: 'Winning Amount',
+        accessor: 'WinningAmount',
+      }
     ];
-
-
-
     
-    // Extract keys from data for additional columns
-    const additionalColumns = data.length > 0 
-      ? Object.keys(data[0]).reduce((acc, key) => {
-          if (!manualColumns.find(col => col.accessor === key)) {
-            acc.push({
-              Header: key.charAt(0).toUpperCase() + key.slice(1),
-              accessor: key,
-              Cell: ({ value }) => {
-                if (value && typeof value === 'object' && !(value instanceof Date)) {
-                  const stringValue = JSON.stringify(value, null);
-                  //return span with class name cell-truncate
-                  if (stringValue.length > 30){
-                    return <span className="cell-truncate" title={stringValue}>{stringValue.substring(0, 30) + "..."}</span>;
-                  }
-                  return <span className="cell-truncate" title={stringValue}>{stringValue}</span>;
 
+
+
+
+    // Extract keys from data for additional columns
+    const additionalColumns = data.length > 0
+      ? Object.keys(data[0]).reduce((acc, key) => {
+        if (!manualColumns.find(col => col.accessor === key)) {
+          acc.push({
+            Header: key.charAt(0).toUpperCase() + key.slice(1),
+            accessor: key,
+            Cell: ({ value }) => {
+              if (value && typeof value === 'object' && !(value instanceof Date)) {
+                const stringValue = JSON.stringify(value, null);
+                //return span with class name cell-truncate
+                if (stringValue.length > 30) {
+                  return <span className="cell-truncate" title={stringValue}>{stringValue.substring(0, 30) + "..."}</span>;
                 }
-                //if boolean value then return true or false
-                if (typeof value === 'boolean') {
-                  return value ? 'True' : 'False';
-                }
-                
-                return value;
+                return <span className="cell-truncate" title={stringValue}>{stringValue}</span>;
+
               }
-            });
-          }
-          return acc;
+              //if boolean value then return true or false
+              if (typeof value === 'boolean') {
+                return value ? 'True' : 'False';
+              }
+
+              return value;
+            }
+          });
+        }
+        return acc;
       }, [])
       : [];
 
@@ -118,6 +137,7 @@ const UserDisplay = () => {
   return (
     <div>
       <h2>User Details</h2>
+      <div className='table-container'>
       <table {...getTableProps()} className="user-table">
         <thead>
           {headerGroups.map(headerGroup => (
@@ -131,8 +151,9 @@ const UserDisplay = () => {
         <tbody {...getTableBodyProps()}>
           {page.map(row => {
             prepareRow(row);
+            const IsRequestingWithdrawal = row.original.IsRequestingWithdrawal; // Get the value
             return (
-              <tr {...row.getRowProps()}>
+              <tr {...row.getRowProps()} className={IsRequestingWithdrawal ? 'user-request-withdrawal' : ''}>
                 {row.cells.map(cell => (
                   <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
                 ))}
@@ -140,6 +161,7 @@ const UserDisplay = () => {
             );
           })}
         </tbody>
+
       </table>
       <div className="pagination">
         <button onClick={() => previousPage()} disabled={!canPreviousPage}>
@@ -154,6 +176,7 @@ const UserDisplay = () => {
             {pageIndex + 1} of {pageOptions.length}
           </strong>
         </span>
+      </div>
       </div>
     </div>
   );

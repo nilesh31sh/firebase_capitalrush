@@ -35,7 +35,8 @@ const ReportDisplay = () => {
   }, []);
 
   const handleStatusChange = (reportId, newStatus) => {
-    update(ref(database, `/HELP_REPORT/${reportId}`), { status: newStatus });
+    const isSolved = newStatus === 'Complete';
+    update(ref(database, `/HELP_REPORT/${reportId}`), { status: newStatus, Solved: isSolved });
   };
 
   const filteredReports = useMemo(() => {

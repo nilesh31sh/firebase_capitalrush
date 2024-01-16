@@ -7,10 +7,16 @@
   border-radius: 8px; /* Rounded corners for the container */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
 }
-
+.table-container {
+  overflow-x: auto;
+  max-height: 100%;
+  max-width: 100%;
+  /* max-height: auto; */
+}
 /* Table styles */
 .contest-table {
   width: 100%;
+  /* height: 100%; */
   border-collapse: collapse;
   margin-bottom: 20px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Shadow for the table */
@@ -63,6 +69,7 @@
 @media (max-width: 600px) {
   .contest-table {
       width: 100%;
+      height: 100%;
       overflow-x: auto;
   }
   .pagination {
@@ -71,5 +78,6 @@
   }
   .contestDisplay {
       padding: 10px;
+      height: 100%;
   }
 }
