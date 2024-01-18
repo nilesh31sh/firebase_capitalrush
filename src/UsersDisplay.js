@@ -135,7 +135,7 @@ const UserDisplay = () => {
   if (data.length === 0) return <p>No user data available</p>;
 
   return (
-    <div>
+    <div className='container-everything'>
       <h2>User Details</h2>
       <div className='table-container'>
       <table {...getTableProps()} className="user-table">

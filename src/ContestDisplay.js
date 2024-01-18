@@ -139,7 +139,7 @@ const ContestDisplay = () => {
   }
 
   return (
-    <div>
+    <div className='container-everything'>
       <h2>Contest Details</h2>
       <div className="table-container">
       <table {...getTableProps()} className="contest-table">

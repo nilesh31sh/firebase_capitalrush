@@ -1,119 +1,200 @@
 import React, { useState, useEffect } from 'react';
 import { database } from './firebase';
 import { ref, set, get } from 'firebase/database';
+import Papa from 'papaparse'; // Ensure papaparse is installed
 import './ContestForm.css';
 
-
 const CreateContestForm = () => {
-  const initialFormData = {
-    //contest id is generated automatically but dosnt contain . or $ or [ or ]
-    ContestID: new Date().toISOString().split('.')[0],
-    duration: 0,
-    entryFee: '',
-    matchType: '',
-    slots: '',
-    startTime: '',
+  const [formData, setFormData] = useState({
+    Duration: 0,
+    EntryFee: '',
+    MatchType: '',
+    Slots: '',
+    StartTime: '',
     FirstPrize: '',
     SecondPrize: '',
     ThirdPrize: '',
     FourthPrize: '',
     FifthPrize: '',
-    prizePool: ''
-  };
-
-  const [formData, setFormData] = useState(initialFormData);
+    PrizePool: '',
+    Contestants: [],
+    botIndexUsed: [],
+    ended: false,
+  });
   const [message, setMessage] = useState('');
   const [slotsError, setSlotsError] = useState('');
+  const [contestCount, setContestCount] = useState(1); // For contest numbering
 
   useEffect(() => {
     calculatePrizes();
-  },);
+  }, [formData.Slots, formData.EntryFee]); // Added Slots and EntryFee as dependencies
 
   const calculatePrizes = () => {
-    if (!formData.slots || !formData.entryFee) return;
+    if (!formData.Slots || !formData.EntryFee) return;
 
-    const prizePool = formData.slots * formData.entryFee;
-    formData.prizePool = prizePool;
+    const PrizePool = formData.Slots * formData.EntryFee;
+    setFormData(prevFormData => ({
+      ...prevFormData,
+      PrizePool: PrizePool,
+      FirstPrize: calculatePrize(PrizePool, 1),
+      SecondPrize: calculatePrize(PrizePool, 2),
+      ThirdPrize: calculatePrize(PrizePool, 3),
+      FourthPrize: calculatePrize(PrizePool, 4),
+      FifthPrize: calculatePrize(PrizePool, 5),
+    }));
+  };
 
-    if (formData.slots <= 10) {
-      formData.FirstPrize = Math.floor(prizePool * 0.5 * 0.7);
-      formData.SecondPrize = Math.floor(prizePool * 0.3 * 0.7);
-      formData.ThirdPrize = formData.FourthPrize = formData.FifthPrize = 20;
-    } else if (formData.slots >= 11 && formData.slots <= 50) {
-      formData.FirstPrize = Math.floor(prizePool * 0.40 * 0.7);
-      formData.SecondPrize = Math.floor(prizePool * 0.20 * 0.7);
-      formData.ThirdPrize = Math.floor(prizePool * 0.11 * 0.7);
-      formData.FourthPrize = Math.floor(prizePool * 0.04 * 0.7);
-      formData.FifthPrize = 28;
-    } else if (formData.slots >= 51) {
-      formData.FirstPrize = Math.floor(prizePool * 0.35 * 0.7);
-      formData.SecondPrize = Math.floor(prizePool * 0.15 * 0.7);
-      formData.ThirdPrize = Math.floor(prizePool * 0.11 * 0.7);
-      formData.FourthPrize = Math.floor(prizePool * 0.04 * 0.7);
-      formData.FifthPrize = 34;
+  const calculatePrize = (PrizePool, position) => {
+    if (formData.Slots <= 10) {
+      if (position === 1) return Math.floor(PrizePool * 0.5 * 0.7);
+      if (position === 2) return Math.floor(PrizePool * 0.3 * 0.7);
+      return 20;
+    } else if (formData.Slots >= 11 && formData.Slots <= 50) {
+      if (position === 1) return Math.floor(PrizePool * 0.40 * 0.7);
+      if (position === 2) return Math.floor(PrizePool * 0.20 * 0.7);
+      if (position === 3) return Math.floor(PrizePool * 0.11 * 0.7);
+      if (position === 4) return Math.floor(PrizePool * 0.04 * 0.7);
+      return 28;
+    } else if (formData.Slots >= 51) {
+      if (position === 1) return Math.floor(PrizePool * 0.35 * 0.7);
+      if (position === 2) return Math.floor(PrizePool * 0.15 * 0.7);
+      if (position === 3) return Math.floor(PrizePool * 0.11 * 0.7);
+      if (position === 4) return Math.floor(PrizePool * 0.04 * 0.7);
+      return 34;
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'slots') {
-      const intValue = parseInt(value, 10) || 0;
-      setFormData({ ...formData, [name]: intValue });
-      if (intValue < 10 || intValue > 500) {
-        setSlotsError('Slots must be between 10 and 500');
-      } else {
-        setSlotsError('');
-      }
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-    if (name === 'slots' || name === 'entryFee' || name === 'duration') {
-      // Remove leading zeros by converting to a number and back to a string
-      const strippedValue = value ? String(Number(value)) : '';
   
-      // Update the state with the stripped value
-      setFormData({ ...formData, [name]: strippedValue });
-    } else {
-      // Handle other fields normally
-      setFormData({ ...formData, [name]: value });
-    }
+    setFormData(prevFormData => {
+      let updatedValue = value;
+      if (['Slots', 'Duration', 'EntryFee'].includes(name)) {
+        const intValue = parseInt(value, 10);
+        updatedValue = intValue ? String(Number(intValue)) : '';
+        if (name === 'Slots' && (intValue < 10 || intValue > 500)) {
+          setSlotsError('Slots must be between 10 and 500');
+        } else if (name === 'Slots') {
+          setSlotsError('');
+        }
+      } else if (name === 'StartTime') {
+        updatedValue = value.replace('T', ' ') + ':00';
+      }
+  
+      const newFormData = {
+        ...prevFormData,
+        [name]: updatedValue,
+      };
+  
+      // Update ContestID based on the latest values
+      if (name === 'MatchType' || name === 'ManualContestID') {
+        newFormData.ContestID = `${newFormData.MatchType}_CONTEST_${newFormData.ManualContestID}`;
+      }
+  
+      return newFormData;
+    });
   };
+  
+  const handleBlur = () => {
+    setFormData(prevFormData => ({
+      ...prevFormData,
+      EntryFee: prevFormData.EntryFee ? Math.round(prevFormData.EntryFee / 10) * 10 : ''
+    }));
+  };
+
+  const pickRandomUsers = async (ContestID, callback) => {
+    const response = await fetch('/UserName.csv');
+    const text = await response.text();
+    const users = text.split(/\r?\n/); 
+    // log user length
+    console.log(users.length);
+
+    const numberOfBots = Math.floor(Math.random() * (formData.Slots - formData.Slots / 3) + formData.Slots / 3);
+    const selectedUsers = [];
+    const selectedIndices = [];
+    const IndicesLeft = Array.from({ length: users.length - 1  }, (_, i) => i);
+
+    while (IndicesLeft.length > 0 && selectedIndices.length < numberOfBots) {
+      const randomIndex = Math.floor(Math.random() * IndicesLeft.length);
+      selectedIndices.push(IndicesLeft[randomIndex]);
+      IndicesLeft.splice(randomIndex, 1);
+      selectedUsers.push(createUserObject(users[selectedIndices[selectedIndices.length - 1]], ContestID));
+    }
+
+    setFormData(prevFormData => {
+      const newFormData = { ...prevFormData, botIndexUsed: selectedIndices };
+      callback(newFormData);  // Call the callback with the updated data
+      return newFormData;
+  });
+
+    return { selectedUsers };
+  };
+
+  const createUserObject = (username, ContestID) => ({
+    Name: username,
+    Email: username + '@gmail.com',
+    Score: Math.floor(Math.random() * (200000 - 50000) + 50000),
+    ContestID,
+    Tickets: 0,
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.slots < 10 || formData.slots > 500) {
-      setSlotsError('Slots must be between 10 and 500');
-      return;
-    }
+    const { ManualContestID, ...dataToSubmit } = formData;
 
-    const ContestIDRef = ref(database, `CONTESTS/${formData.ContestID}`);
-    const snapshot = await get(ContestIDRef);
-    if (snapshot.exists()) {
-      setMessage('Contest ID already exists');
-    } else {
-      set(ContestIDRef, formData) // Storing the formData under the specified ContestID
-        .then(() => {
-          setMessage('Contest created successfully');
-          setFormData(initialFormData); // Reset form after submission
-        })
-        .catch((error) => {
-          // Handle any errors that occur during set
-          setMessage('Error creating contest: ' + error.message);
-        });
+    if (!dataToSubmit.ContestID) {
+        setMessage('Please enter a Contest ID');
+        return;
     }
-  };
+    if (dataToSubmit.Slots < 10 || dataToSubmit.Slots > 500) {
+        setSlotsError('Slots must be between 10 and 500');
+        return;
+    }
+    
+    setMessage('Selecting bots; please wait...');
+    const { selectedUsers } = await pickRandomUsers(dataToSubmit.ContestID, async (updatedFormData) => {
+        setMessage('Trying to Store contest; please wait...');
+        const ContestIDRef = ref(database, `CONTESTS/${updatedFormData.ContestID}`);
+        const snapshot = await get(ContestIDRef);
+        if (snapshot.exists()) {
+            setMessage('Contest ID already exists');
+        } else {
+            set(ContestIDRef, { ...updatedFormData, Contestants: selectedUsers })
+                .then(() => {
+                    setMessage('Contest created successfully');
+                    setFormData({ ...updatedFormData, Contestants: [] }); 
+                    setContestCount(contestCount + 1); 
+                })
+                .catch((error) => {
+                    setMessage('Error creating contest: ' + error.message);
+                });
+        }
+    });
+};
+
 
   return (
     <div className="form-container">
       <h1>Create Contest</h1>
       <form onSubmit={handleSubmit}>
-        <label className="form-field">
+
+      <label className="form-field">
           Contest ID:
           <input
             type="text"
-            name="ContestID"
             value={formData.ContestID}
             readOnly
+            className="form-input"
+          />
+        </label>
+        <label className="form-field">
+          Manual Contest ID:
+          <input
+            type="text"
+            name="ManualContestID"
+            value={formData.ManualContestID}
+            onChange={handleChange}
+            required
             className="form-input"
           />
         </label>
@@ -122,8 +203,8 @@ const CreateContestForm = () => {
           Duration (Hours):
           <input
             type="number"
-            name="duration"
-            value={formData.duration}
+            name="Duration"
+            value={formData.Duration}
             onChange={handleChange}
             required
             className="form-input"
@@ -135,16 +216,16 @@ const CreateContestForm = () => {
         <label className="form-field">
           Match Type:
           <select
-            name="matchType"
-            value={formData.matchType}
+            name="MatchType"
+            value={formData.MatchType}
             onChange={handleChange}
             required
             className="form-input"
           >
             <option value="">Select Match Type</option>
             <option value="Mahasangram">Mahasangram</option>
-            <option value="Gold_gala">Gold Gala</option>
-            <option value="Silver_gala">Silver Gala</option>
+            <option value="Gold_Gala">Gold Gala</option>
+            <option value="Silver_Summit">Silver Summit</option>
             <option value="Quick_Gainer_Challenge">Quick Gainer Challenge</option>
             <option value="PracticeMatch">Practice Match</option>
             {/* Add your match type options here */}
@@ -152,12 +233,18 @@ const CreateContestForm = () => {
         </label>
 
 
+
+
+
+
+
+
         <label className="form-field">
           Start Time (DateTime):
           <input
             type="datetime-local"
-            name="startTime"
-            value={formData.startTime}
+            name="StartTime"
+            value={formData.StartTime}
             onChange={handleChange}
             required
             className="form-input"
@@ -167,30 +254,30 @@ const CreateContestForm = () => {
           Slots (10 to 500):
           <input
             type="number"
-            name="slots"
-            value={formData.slots}
+            name="Slots"
+            value={formData.Slots}
             onChange={handleChange}
             className="form-input"
           />
           {slotsError && <p className="error-message">{slotsError}</p>}
         </label>
-
+        {/* ... (Rest of the form fields) ... */}
         <label className="form-field">
           Entry Fee:
           <input
             type="number"
-            name="entryFee"
-            value={formData.entryFee}
+            name="EntryFee"
+            value={formData.EntryFee}
             onChange={handleChange}
+            onBlur={handleBlur}
             required
             className="form-input"
           />
         </label>
-
-
+        {/* ... (Other form fields) ... */}
         <div className="prizes-container">
           <h3>Prize Distribution</h3>
-          <p>Prize Pool: {formData.slots * formData.entryFee}</p>
+          <p>Prize Pool: {formData.Slots * formData.EntryFee}</p>
 
           <p>First Prize: {formData.FirstPrize}</p>
           <p>Second Prize: {formData.SecondPrize}</p>
@@ -198,7 +285,6 @@ const CreateContestForm = () => {
           <p>Fourth Prize: {formData.FourthPrize}</p>
           <p>Fifth Prize: {formData.FifthPrize}</p>
         </div>
-
         <button type="submit" className="form-submit">Create Contest</button>
       </form>
       {message && <p className="form-message">{message}</p>}
