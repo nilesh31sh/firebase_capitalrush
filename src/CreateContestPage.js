@@ -25,6 +25,10 @@ const CreateContestForm = () => {
   const [slotsError, setSlotsError] = useState('');
   const [contestCount, setContestCount] = useState(1); // For contest numbering
 
+  const handleGenerateIdClick = () => {
+    const randomId = Math.floor(1000000 + Math.random() * 9000000); // Generates a 6-digit number
+    setFormData({ ...formData, ManualContestID: randomId.toString() });
+  };
   useEffect(() => {
     calculatePrizes();
   }, [formData.Slots, formData.EntryFee]); // Added Slots and EntryFee as dependencies
@@ -85,11 +89,18 @@ const CreateContestForm = () => {
         ...prevFormData,
         [name]: updatedValue,
       };
-  
+      
+      if (name === 'StartTime') {
+        let manualId = value.replace(/[-T:]/g, ''); // Removes '-', 'T', and ':' from the string
+        // add second
+        manualId += '00';
+        newFormData.ManualContestID = manualId;
+      }
       // Update ContestID based on the latest values
-      if (name === 'MatchType' || name === 'ManualContestID') {
+      if (name === 'MatchType' || name === 'ManualContestID' || name === 'StartTime') {
         newFormData.ContestID = `${newFormData.MatchType}_CONTEST_${newFormData.ManualContestID}`;
       }
+
   
       return newFormData;
     });
@@ -198,7 +209,7 @@ const CreateContestForm = () => {
             className="form-input"
           />
         </label>
-        <label className="form-field">
+        {/* <label className="form-field">
           Manual Contest ID:
           <input
             type="text"
@@ -208,7 +219,10 @@ const CreateContestForm = () => {
             required
             className="form-input"
           />
-        </label>
+          <button type="button" onClick={handleGenerateIdClick} className="generate-id-button">
+            Generate ID
+          </button>
+        </label> */}
 
         <label className="form-field">
           Duration (Hours):
