@@ -140,38 +140,49 @@ const CreateContestForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { ManualContestID, ...dataToSubmit } = formData;
-
+    const { ManualContestID, botIndexUsed, ...dataToSubmit } = formData;
+  
     if (!dataToSubmit.ContestID) {
-        setMessage('Please enter a Contest ID');
-        return;
+      setMessage('Please enter a Contest ID');
+      return;
     }
     if (dataToSubmit.Slots < 10 || dataToSubmit.Slots > 500) {
-        setSlotsError('Slots must be between 10 and 500');
-        return;
+      setSlotsError('Slots must be between 10 and 500');
+      return;
     }
-    
+  
+    const formattedStartTime = formatDate(new Date(dataToSubmit.StartTime.replace('T', ' ')));
+    const endTime = new Date(new Date(dataToSubmit.StartTime.replace('T', ' ')).getTime() + dataToSubmit.Duration * 60 * 60 * 1000);
+    const formattedEndTime = formatDate(endTime);
+   
+
+  
     setMessage('Selecting bots; please wait...');
     const { selectedUsers } = await pickRandomUsers(dataToSubmit.ContestID, async (updatedFormData) => {
-        setMessage('Trying to Store contest; please wait...');
-        const ContestIDRef = ref(database, `CONTESTS/${updatedFormData.ContestID}`);
-        const snapshot = await get(ContestIDRef);
-        if (snapshot.exists()) {
-            setMessage('Contest ID already exists');
-        } else {
-            set(ContestIDRef, { ...updatedFormData, Contestants: selectedUsers })
-                .then(() => {
-                    setMessage('Contest created successfully');
-                    setFormData({ ...updatedFormData, Contestants: [] }); 
-                    setContestCount(contestCount + 1); 
-                })
-                .catch((error) => {
-                    setMessage('Error creating contest: ' + error.message);
-                });
-        }
+      setMessage('Trying to Store contest; please wait...');
+      const ContestIDRef = ref(database, `CONTESTS/${updatedFormData.ContestID}`);
+      const snapshot = await get(ContestIDRef);
+      if (snapshot.exists()) {
+        setMessage('Contest ID already exists');
+      } else {
+        set(ContestIDRef, { ...updatedFormData, Contestants: selectedUsers,StartTime: formattedStartTime, EndTime: formattedEndTime })
+          .then(() => {
+            setMessage('Contest created successfully');
+            setFormData({ ...updatedFormData, Contestants: [] }); 
+            setContestCount(contestCount + 1); 
+          })
+          .catch((error) => {
+            setMessage('Error creating contest: ' + error.message);
+          });
+      }
     });
-};
+  };
+  
 
+  function formatDate(date) {
+    const pad = num => String(num).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  }
 
   return (
     <div className="form-container">
