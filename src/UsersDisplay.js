@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useTable, usePagination } from 'react-table';
 import { Link } from 'react-router-dom';
 import { database } from './firebase';
-import { ref, onValue } from 'firebase/database';
+import { ref, onValue, update } from 'firebase/database';
 import './UserDisplay.css';
 
 const UserDisplay = () => {
@@ -19,7 +19,7 @@ const UserDisplay = () => {
           id,
           ...entry
         }))
-        .sort((a, b) => (b.IsRequestingWithdrawal === true) ? 1 : -1); // Sorting logic
+        .sort((a, b) => (b.IsRequestingWithdrawal === true) ? 1 : -1);
 
       setData(formattedData);
       setLoading(false);
@@ -31,83 +31,109 @@ const UserDisplay = () => {
     return () => unsubscribe();
   }, []);
 
+  // Function to handle the withdrawal status change
+  const handleWithdrawalStatusChange = (userId) => {
+    const updates = {};
+    updates[`/USERS/${userId}/IsRequestingWithdrawal`] = false;
+    updates[`/USERS/${userId}/WithdrawalAmount`] = 0;
 
-
+    update(ref(database), updates)
+      .then(() => {
+        console.log('Withdrawal status updated for user:', userId);
+        // Optionally, refresh the data in your component here
+      })
+      .catch((error) => {
+        console.error('Error updating withdrawal status:', error);
+      });
+  };
 
   const columns = useMemo(() => {
     if (data.length === 0) {
       return [];
     }
-
-    // Manually defined columns
-    const manualColumns = [
-      {
-        Header: 'User ID',
-        accessor: 'id',
-      },
-      {
-        Header: 'myContestsJoined',
-        accessor: 'myContestsJoined',
-        Cell: ({ row }) => <Link to={`/users/${row.original.id}/myContestsJoined`}>View Contests</Link>,
-      },
-      {
-        Header: 'myContestsCompleted',
-        accessor: 'myContestsCompleted',
-        Cell: ({ row }) => <Link to={`/users/${row.original.id}/myContestsCompleted`}>View Contests</Link>,
-      },
-      {
-        Header: 'Is Requesting Withdrawal',
-        accessor: 'IsRequestingWithdrawal',
-        // its a boolean
-        Cell: ({ value }) => value ? 'True' : 'False'
-      },
-      {
-        Header: 'Withdrawal Amount',
-        accessor: 'WithdrawalAmount',
-      },
-      {
-        Header: 'Winning Amount',
-        accessor: 'WinningAmount',
-      }
-    ];
+    // ... [existing columns setup]
+        // Manually defined columns
+        const manualColumns = [
+          {
+            Header: 'User ID',
+            accessor: 'id',
+          },
+          {
+            Header: 'myContestsJoined',
+            accessor: 'myContestsJoined',
+            Cell: ({ row }) => <Link to={`/users/${row.original.id}/myContestsJoined`}>View Contests</Link>,
+          },
+          {
+            Header: 'myContestsCompleted',
+            accessor: 'myContestsCompleted',
+            Cell: ({ row }) => <Link to={`/users/${row.original.id}/myContestsCompleted`}>View Contests</Link>,
+          },
+          {
+            Header: 'Is Requesting Withdrawal',
+            accessor: 'IsRequestingWithdrawal',
+            // its a boolean
+            Cell: ({ value }) => value ? 'True' : 'False'
+          },
+          {
+            Header: 'Withdrawal Amount',
+            accessor: 'WithdrawalAmount',
+          },
+          {
+            Header: 'Winning Amount',
+            accessor: 'WinningAmount',
+          }
+        ];
+        
     
-
-
-
-
-    // Extract keys from data for additional columns
-    const additionalColumns = data.length > 0
-      ? Object.keys(data[0]).reduce((acc, key) => {
-        if (!manualColumns.find(col => col.accessor === key)) {
-          acc.push({
-            Header: key.charAt(0).toUpperCase() + key.slice(1),
-            accessor: key,
-            Cell: ({ value }) => {
-              if (value && typeof value === 'object' && !(value instanceof Date)) {
-                const stringValue = JSON.stringify(value, null);
-                //return span with class name cell-truncate
-                if (stringValue.length > 30) {
-                  return <span className="cell-truncate" title={stringValue}>{stringValue.substring(0, 30) + "..."}</span>;
+    
+    
+    
+        // Extract keys from data for additional columns
+        const additionalColumns = data.length > 0
+          ? Object.keys(data[0]).reduce((acc, key) => {
+            if (!manualColumns.find(col => col.accessor === key)) {
+              acc.push({
+                Header: key.charAt(0).toUpperCase() + key.slice(1),
+                accessor: key,
+                Cell: ({ value }) => {
+                  if (value && typeof value === 'object' && !(value instanceof Date)) {
+                    const stringValue = JSON.stringify(value, null);
+                    //return span with class name cell-truncate
+                    if (stringValue.length > 30) {
+                      return <span className="cell-truncate" title={stringValue}>{stringValue.substring(0, 30) + "..."}</span>;
+                    }
+                    return <span className="cell-truncate" title={stringValue}>{stringValue}</span>;
+    
+                  }
+                  //if boolean value then return true or false
+                  if (typeof value === 'boolean') {
+                    return value ? 'True' : 'False';
+                  }
+    
+                  return value;
                 }
-                return <span className="cell-truncate" title={stringValue}>{stringValue}</span>;
-
-              }
-              //if boolean value then return true or false
-              if (typeof value === 'boolean') {
-                return value ? 'True' : 'False';
-              }
-
-              return value;
+              });
             }
-          });
-        }
-        return acc;
-      }, [])
-      : [];
+            return acc;
+          }, [])
+          : [];
 
+    // Add a new column for the button
+    const actionColumn = {
+      Header: 'Actions',
+      id: 'actions',
+      Cell: ({ row }) => (
+        <button
+          onClick={() => handleWithdrawalStatusChange(row.original.id)}
+          disabled={!row.original.IsRequestingWithdrawal}
+          style={{ opacity: row.original.IsRequestingWithdrawal ? 1 : 0.5 }}
+        >
+          Reset Withdrawal
+        </button>
+      ),
+    };
 
-    // Combine manually defined columns and additional columns
-    return [...manualColumns, ...additionalColumns];
+    return [actionColumn, ...manualColumns,  ...additionalColumns];
   }, [data]);
 
   const tableInstance = useTable(
@@ -129,10 +155,12 @@ const UserDisplay = () => {
     previousPage,
     state: { pageIndex },
   } = tableInstance;
+  // ... [rest of your existing table setup]
 
   if (loading) return <p>Loading user data...</p>;
   if (error) return <p>{error}</p>;
   if (data.length === 0) return <p>No user data available</p>;
+
 
   return (
     <div className='container-everything'>

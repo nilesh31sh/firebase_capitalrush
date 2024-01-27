@@ -19,6 +19,7 @@ const CreateContestForm = () => {
     PrizePool: '',
     Contestants: [],
     botIndexUsed: [],
+    PrizePoolToShow: '',
     ended: false,
   });
   const [message, setMessage] = useState('');
@@ -99,6 +100,11 @@ const CreateContestForm = () => {
       // Update ContestID based on the latest values
       if (name === 'MatchType' || name === 'ManualContestID' || name === 'StartTime') {
         newFormData.ContestID = `${newFormData.MatchType}_CONTEST_${newFormData.ManualContestID}`;
+      }
+      if (name === 'Slots' || name === 'EntryFee') {
+        newFormData.PrizePoolToShow = Math.round(newFormData.Slots * newFormData.EntryFee * 0.95);
+        //convert to int
+
       }
 
   
@@ -236,8 +242,6 @@ const CreateContestForm = () => {
           />
         </label>
 
-
-
         <label className="form-field">
           Match Type:
           <select
@@ -256,13 +260,6 @@ const CreateContestForm = () => {
             {/* Add your match type options here */}
           </select>
         </label>
-
-
-
-
-
-
-
 
         <label className="form-field">
           Start Time (DateTime):
@@ -309,6 +306,7 @@ const CreateContestForm = () => {
           <p>Third Prize: {formData.ThirdPrize}</p>
           <p>Fourth Prize: {formData.FourthPrize}</p>
           <p>Fifth Prize: {formData.FifthPrize}</p>
+          <p>Prize Pool to Show: {formData.PrizePoolToShow}</p>
         </div>
         <button type="submit" className="form-submit">Create Contest</button>
       </form>

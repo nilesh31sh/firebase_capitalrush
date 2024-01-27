@@ -11,9 +11,9 @@ const Sidebar = ({ isOpen, toggle }) => {
         {isOpen ? '←' : '→'} {/* Arrow icons could be replaced with icons from a library like FontAwesome */}
       </button>
       <ul className="sidebar-menu">
-        <li>
-          <Link to="/" onClick={toggle}>Home</Link>
-        </li>
+        {/* <li>
+          <Link to="/contests" onClick={toggle}>Home</Link>
+        </li> */}
         <li>
           <Link to="/contests" onClick={toggle}>Contests</Link> {/* This is the new link for contests */}
         </li>
