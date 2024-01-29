@@ -16,55 +16,54 @@ const CreateContestForm = () => {
     ThirdPrize: '',
     FourthPrize: '',
     FifthPrize: '',
-    PrizePool: '',
+
     Contestants: [],
     botIndexUsed: [],
     PrizePoolToShow: '',
     ended: false,
+    PrizePoolSuggested: '',
+    ContestName: '',
+
   });
   const [message, setMessage] = useState('');
   const [slotsError, setSlotsError] = useState('');
   const [contestCount, setContestCount] = useState(1); // For contest numbering
 
-  const handleGenerateIdClick = () => {
-    const randomId = Math.floor(1000000 + Math.random() * 9000000); // Generates a 6-digit number
-    setFormData({ ...formData, ManualContestID: randomId.toString() });
-  };
   useEffect(() => {
     calculatePrizes();
-  }, [formData.Slots, formData.EntryFee]); // Added Slots and EntryFee as dependencies
+  }, [formData.Slots, formData.EntryFee, formData.PrizePoolSuggested]); // Added Slots and EntryFee as dependencies
 
   const calculatePrizes = () => {
-    if (!formData.Slots || !formData.EntryFee) return;
+    if (!formData.Slots || !formData.EntryFee || !formData.PrizePoolSuggested) return;
 
-    const PrizePool = formData.Slots * formData.EntryFee;
+    const PrizePoolSuggested = formData.PrizePoolSuggested
     setFormData(prevFormData => ({
       ...prevFormData,
-      PrizePool: PrizePool,
-      FirstPrize: calculatePrize(PrizePool, 1),
-      SecondPrize: calculatePrize(PrizePool, 2),
-      ThirdPrize: calculatePrize(PrizePool, 3),
-      FourthPrize: calculatePrize(PrizePool, 4),
-      FifthPrize: calculatePrize(PrizePool, 5),
+      PrizePoolSuggested: PrizePoolSuggested,
+      FirstPrize: calculatePrize(PrizePoolSuggested, 1),
+      SecondPrize: calculatePrize(PrizePoolSuggested, 2),
+      ThirdPrize: calculatePrize(PrizePoolSuggested, 3),
+      FourthPrize: calculatePrize(PrizePoolSuggested, 4),
+      FifthPrize: calculatePrize(PrizePoolSuggested, 5),
     }));
   };
 
   const calculatePrize = (PrizePool, position) => {
     if (formData.Slots <= 10) {
-      if (position === 1) return Math.floor(PrizePool * 0.5 * 0.7);
-      if (position === 2) return Math.floor(PrizePool * 0.3 * 0.7);
+      if (position === 1) return Math.floor(PrizePool * 0.5 );
+      if (position === 2) return Math.floor(PrizePool * 0.3 );
       return 20;
     } else if (formData.Slots >= 11 && formData.Slots <= 50) {
-      if (position === 1) return Math.floor(PrizePool * 0.40 * 0.7);
-      if (position === 2) return Math.floor(PrizePool * 0.20 * 0.7);
-      if (position === 3) return Math.floor(PrizePool * 0.11 * 0.7);
-      if (position === 4) return Math.floor(PrizePool * 0.04 * 0.7);
+      if (position === 1) return Math.floor(PrizePool * 0.40 );
+      if (position === 2) return Math.floor(PrizePool * 0.20 );
+      if (position === 3) return Math.floor(PrizePool * 0.11 );
+      if (position === 4) return Math.floor(PrizePool * 0.04 );
       return 28;
     } else if (formData.Slots >= 51) {
-      if (position === 1) return Math.floor(PrizePool * 0.35 * 0.7);
-      if (position === 2) return Math.floor(PrizePool * 0.15 * 0.7);
-      if (position === 3) return Math.floor(PrizePool * 0.11 * 0.7);
-      if (position === 4) return Math.floor(PrizePool * 0.04 * 0.7);
+      if (position === 1) return Math.floor(PrizePool * 0.35 );
+      if (position === 2) return Math.floor(PrizePool * 0.15 );
+      if (position === 3) return Math.floor(PrizePool * 0.11 );
+      if (position === 4) return Math.floor(PrizePool * 0.04 );
       return 34;
     }
   };
@@ -74,7 +73,7 @@ const CreateContestForm = () => {
   
     setFormData(prevFormData => {
       let updatedValue = value;
-      if (['Slots', 'Duration', 'EntryFee'].includes(name)) {
+      if (['Slots', 'Duration', 'EntryFee', 'PrizePoolSuggested'].includes(name)) {
         const intValue = parseInt(value, 10);
         updatedValue = intValue ? String(Number(intValue)) : '';
         if (name === 'Slots' && (intValue < 10 || intValue > 500)) {
@@ -102,11 +101,12 @@ const CreateContestForm = () => {
         newFormData.ContestID = `${newFormData.MatchType}_CONTEST_${newFormData.ManualContestID}`;
       }
       if (name === 'Slots' || name === 'EntryFee') {
-        newFormData.PrizePoolToShow = Math.round(newFormData.Slots * newFormData.EntryFee * 0.95);
+        newFormData.PrizePoolToShow = Math.round(newFormData.Slots * newFormData.EntryFee * 0.85);
         //convert to int
 
       }
-
+      // log new form data
+      console.log(newFormData);
   
       return newFormData;
     });
@@ -229,6 +229,17 @@ const CreateContestForm = () => {
             Generate ID
           </button>
         </label> */}
+        <label className="form-field">
+          ContestName:
+          <input
+            type="text"
+            name="ContestName"
+            value={formData.ContestName}
+            onChange={handleChange}
+            required
+            className="form-input"
+          />
+        </label>
 
         <label className="form-field">
           Duration (Hours):
@@ -236,6 +247,18 @@ const CreateContestForm = () => {
             type="number"
             name="Duration"
             value={formData.Duration}
+            onChange={handleChange}
+            required
+            className="form-input"
+          />
+        </label>
+
+        <label className="form-field">
+          Prize Pool Suggested:
+          <input
+            type="number"
+            name="PrizePoolSuggested"
+            value={formData.PrizePoolSuggested}
             onChange={handleChange}
             required
             className="form-input"
@@ -299,7 +322,7 @@ const CreateContestForm = () => {
         {/* ... (Other form fields) ... */}
         <div className="prizes-container">
           <h3>Prize Distribution</h3>
-          <p>Prize Pool: {formData.Slots * formData.EntryFee}</p>
+          <p>Prize Pool Suggested: {formData.PrizePoolSuggested}</p>
 
           <p>First Prize: {formData.FirstPrize}</p>
           <p>Second Prize: {formData.SecondPrize}</p>

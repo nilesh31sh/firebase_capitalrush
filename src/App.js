@@ -27,6 +27,8 @@ function App() {
             {isSidebarOpen ? '←' : '→'}
           </button>
           <Routes>
+            {/* Redirect / to /contests */}
+            <Route path="/" element={<ContestDisplay />} />
             <Route path="/contests" element={<ContestDisplay />} />
             <Route path="/contests/:contestId" element={<ContestantsView />} />
             <Route path="/users" element={<UserDisplay />} />

@@ -128,7 +128,7 @@ const UserDisplay = () => {
           disabled={!row.original.IsRequestingWithdrawal}
           style={{ opacity: row.original.IsRequestingWithdrawal ? 1 : 0.5 }}
         >
-          Reset Withdrawal
+          Withdrawal Done
         </button>
       ),
     };

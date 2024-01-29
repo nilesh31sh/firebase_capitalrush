@@ -1,16 +1,16 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useTable, usePagination } from 'react-table';
+import { useTable, usePagination, useFilters } from 'react-table';
 import { Link } from 'react-router-dom';
 import { database } from './firebase';
 import { ref, onValue } from 'firebase/database';
 import './ContestDisplay.css';
 
-
-
 const ContestDisplay = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [filterInputMatchType, setFilterInputMatchType] = useState('');
+  const [filterInputDuration, setFilterInputDuration] = useState('');
 
   useEffect(() => {
     const contestRef = ref(database, 'CONTESTS');
@@ -30,6 +30,42 @@ const ContestDisplay = () => {
     return () => unsubscribe();
   }, []);
 
+  const filterTypes = useMemo(() => ({
+    // Add a new fuzzyText filter type.
+    fuzzyText: (rows, id, filterValue) => {
+      return rows.filter(row => {
+        const rowValue = row.values[id];
+        return rowValue !== undefined
+          ? String(rowValue).toLowerCase().includes(String(filterValue).toLowerCase())
+          : true;
+      });
+    },
+    // Add a new startsWith filter type.
+    startsWith: (rows, id, filterValue) => {
+      return rows.filter(row => {
+        const rowValue = row.values[id];
+        return rowValue !== undefined
+          ? String(rowValue).toLowerCase().startsWith(String(filterValue).toLowerCase())
+          : true;
+      });
+    },
+  }), []);
+
+  const defaultColumn = useMemo(() => ({
+    // Let's set up our default Filter UI
+    Filter: ({ column: { filterValue, setFilter, preFilteredRows, id } }) => {
+      return (
+        <input
+          value={filterValue || ''}
+          onChange={e => {
+            setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
+          }}
+          placeholder={`Search ${id}`}
+        />
+      );
+    }
+  }), []);
+
   const columns = useMemo(() => {
     const manualColumns = [
       {
@@ -37,8 +73,12 @@ const ContestDisplay = () => {
         accessor: 'ContestID'
       },
       {
-        Header: 'End Time',
+        Header: '   EndTime   ',
         accessor: 'EndTime'
+      },
+      {
+        Header: 'Duration',
+        accessor: 'Duration'
       },
       {
         Header: 'Ended',
@@ -49,6 +89,10 @@ const ContestDisplay = () => {
         Header: 'Contestants',
         accessor: 'Contestants',
         Cell: ({ row }) => <Link to={`/contests/${row.original.ContestID}`}>View Contestants</Link>
+      },
+      {
+        Header: 'Contest Type',
+        accessor: 'MatchType'
       },
       {
         Header: 'FirstPrize',
@@ -106,26 +150,48 @@ const ContestDisplay = () => {
   return [...manualColumns, ...additionalColumns];
 }, [data]); // Dependency array for useMemo
 
-  const tableInstance = useTable(
-    { columns, data },
-    usePagination
-  );
+const {
+  getTableProps,
+  getTableBodyProps,
+  headerGroups,
+  prepareRow,
+  page,
+  canPreviousPage,
+  canNextPage,
+  pageOptions,
+  nextPage,
+  previousPage,
+  setAllFilters,
+  state: { pageIndex },
+} = useTable(
+  {
+    columns,
+    data,
+    initialState: { pageIndex: 0 },
+    defaultColumn, // Be sure to pass the defaultColumn option
+    filterTypes,
+  },
+  useFilters,
+  usePagination
+);
 
-  // Destructure the required properties and methods from the table instance
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    prepareRow,
-    page,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    nextPage,
-    previousPage,
-    state: { pageIndex },
-  } = tableInstance;
+const handleFilterChangeMatchType = e => {
+  const value = e.target.value || undefined;
+  setAllFilters(filters => [
+    ...filters.filter(filter => filter.id !== 'MatchType'),
+    { id: 'MatchType', value: value }
+  ]);
+  setFilterInputMatchType(value);
+};
 
+const handleFilterChangeDuration = e => {
+  const value = e.target.value || undefined;
+  setAllFilters(filters => [
+    ...filters.filter(filter => filter.id !== 'Duration'),
+    { id: 'Duration', value: value }
+  ]);
+  setFilterInputDuration(value);
+};
   if (loading) {
     return <p>Loading contest data...</p>;
   }
@@ -140,7 +206,31 @@ const ContestDisplay = () => {
 
   return (
     <div className='container-everything'>
-      <h2>Contest Details</h2>
+<h2>Contest Details</h2>
+        
+        <div class="filter-container"> 
+          <label class="filter-label">
+            Match Type : 
+            <input
+              class="filter-input"
+              value={filterInputMatchType}
+              onChange={handleFilterChangeMatchType}
+              placeholder="Filter by Match Type"
+            />
+          </label>
+        
+          <label class="filter-label">
+            Duration :  
+            <input
+              class="filter-input"
+              value={filterInputDuration}
+              onChange={handleFilterChangeDuration}
+              placeholder="Filter by Duration"
+            />
+          </label>
+        </div>
+        
+      
       <div className="table-container">
       <table {...getTableProps()} className="contest-table">
         <thead>
