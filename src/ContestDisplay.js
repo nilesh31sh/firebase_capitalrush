@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useTable, usePagination, useFilters } from 'react-table';
+import { useTable, usePagination, useFilters, useSortBy } from 'react-table';
 import { Link } from 'react-router-dom';
 import { database } from './firebase';
 import { ref, onValue } from 'firebase/database';
@@ -73,6 +73,14 @@ const ContestDisplay = () => {
         accessor: 'ContestID'
       },
       {
+        Header: 'Contest Name',
+        accessor: 'ContestName'
+      },
+      {
+        Header: 'StartTime',
+        accessor: 'StartTime'
+      },
+      {
         Header: '   EndTime   ',
         accessor: 'EndTime'
       },
@@ -110,10 +118,24 @@ const ContestDisplay = () => {
         Header: 'FourthPrize',
         accessor: 'FourthPrize'
       },
+
       {
         Header: 'FifthPrize',
         accessor: 'FifthPrize'
       },
+      {
+        Header: 'PrizePoolSuggested',
+        accessor: 'PrizePoolSuggested'
+      },
+      {
+        Header: 'PrizePoolPlatformFees',
+        accessor: 'PrizePoolPlatformFees'
+      },
+      {
+        Header: 'PrizePoolToShow',
+        accessor: 'PrizePoolToShow'
+      },
+
       // ... other manually defined columns ...
     ];
 
@@ -150,6 +172,10 @@ const ContestDisplay = () => {
   return [...manualColumns, ...additionalColumns];
 }, [data]); // Dependency array for useMemo
 
+
+const initialState = { pageIndex: 0, sortBy: [{ id: 'StartTime', desc: false }] }; // Assuming 'StartTime' is the correct accessor
+
+
 const {
   getTableProps,
   getTableBodyProps,
@@ -167,12 +193,14 @@ const {
   {
     columns,
     data,
-    initialState: { pageIndex: 0 },
+    initialState, // Use the initialState
     defaultColumn, // Be sure to pass the defaultColumn option
     filterTypes,
   },
   useFilters,
-  usePagination
+  useSortBy ,
+  usePagination,
+  // Add useSortBy hook here
 );
 
 const handleFilterChangeMatchType = e => {
@@ -233,15 +261,22 @@ const handleFilterChangeDuration = e => {
       
       <div className="table-container">
       <table {...getTableProps()} className="contest-table">
-        <thead>
-          {headerGroups.map(headerGroup => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map(column => (
-                <th {...column.getHeaderProps()}>{column.render('Header')}</th>
-              ))}
-            </tr>
+      <thead>
+      {headerGroups.map(headerGroup => (
+        <tr {...headerGroup.getHeaderGroupProps()}>
+          {headerGroup.headers.map(column => (
+            <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+              {column.render('Header')}
+              <span>
+                {column.isSorted
+                  ? (column.isSortedDesc ? ' 🔽' : ' 🔼')
+                  : ' ↕️'} {/* Default indicator for unsorted columns */}
+              </span>
+            </th>
           ))}
-        </thead>
+        </tr>
+      ))}
+    </thead>
         <tbody {...getTableBodyProps()}>
           {page.map(row => {
             prepareRow(row);

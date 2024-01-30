@@ -16,7 +16,7 @@ const CreateContestForm = () => {
     ThirdPrize: '',
     FourthPrize: '',
     FifthPrize: '',
-
+    PrizePoolPlatformFees: '',
     Contestants: [],
     botIndexUsed: [],
     PrizePoolToShow: '',
@@ -48,24 +48,25 @@ const CreateContestForm = () => {
     }));
   };
 
-  const calculatePrize = (PrizePool, position) => {
-    if (formData.Slots <= 10) {
-      if (position === 1) return Math.floor(PrizePool * 0.5 );
-      if (position === 2) return Math.floor(PrizePool * 0.3 );
-      return 20;
+    const calculatePrize = (PrizePool, position) => {
+      if (formData.Slots <= 10) {
+        if (position === 1) return Math.round(PrizePool * 0.5 / 10) * 10;
+        if (position === 2) return Math.round(PrizePool * 0.3 / 10) * 10;
+        return 30; // Assuming you want to keep this as is
     } else if (formData.Slots >= 11 && formData.Slots <= 50) {
-      if (position === 1) return Math.floor(PrizePool * 0.40 );
-      if (position === 2) return Math.floor(PrizePool * 0.20 );
-      if (position === 3) return Math.floor(PrizePool * 0.11 );
-      if (position === 4) return Math.floor(PrizePool * 0.04 );
-      return 28;
+        if (position === 1) return Math.round(PrizePool * 0.40 / 10) * 10;
+        if (position === 2) return Math.round(PrizePool * 0.20 / 10) * 10;
+        if (position === 3) return Math.round(PrizePool * 0.04 / 10) * 10;
+        if (position === 4) return Math.round((PrizePool * 0.016) / 10) * 10;
+        return 10; // Assuming you want to keep this as is
     } else if (formData.Slots >= 51) {
-      if (position === 1) return Math.floor(PrizePool * 0.35 );
-      if (position === 2) return Math.floor(PrizePool * 0.15 );
-      if (position === 3) return Math.floor(PrizePool * 0.11 );
-      if (position === 4) return Math.floor(PrizePool * 0.04 );
-      return 34;
+        if (position === 1) return Math.round(PrizePool * 0.35 / 10) * 10;
+        if (position === 2) return Math.round(PrizePool * 0.15 / 10) * 10;
+        if (position === 3) return Math.round(PrizePool * 0.04 / 10) * 10;
+        if (position === 4) return Math.round((PrizePool * 0.016) / 10) * 10;
+        return 10; // Assuming you want to keep this as is
     }
+    
   };
 
   const handleChange = (e) => {
@@ -73,7 +74,7 @@ const CreateContestForm = () => {
   
     setFormData(prevFormData => {
       let updatedValue = value;
-      if (['Slots', 'Duration', 'EntryFee', 'PrizePoolSuggested'].includes(name)) {
+      if (['Slots', 'Duration', 'EntryFee', 'PrizePoolSuggested', 'PrizePoolPlatformFees'].includes(name)) {
         const intValue = parseInt(value, 10);
         updatedValue = intValue ? String(Number(intValue)) : '';
         if (name === 'Slots' && (intValue < 10 || intValue > 500)) {
@@ -100,8 +101,8 @@ const CreateContestForm = () => {
       if (name === 'MatchType' || name === 'ManualContestID' || name === 'StartTime') {
         newFormData.ContestID = `${newFormData.MatchType}_CONTEST_${newFormData.ManualContestID}`;
       }
-      if (name === 'Slots' || name === 'EntryFee') {
-        newFormData.PrizePoolToShow = Math.round(newFormData.Slots * newFormData.EntryFee * 0.85);
+      if (name === 'Slots' || name === 'EntryFee' || name ==='PrizePoolPlatformFees') {
+        newFormData.PrizePoolToShow = Math.round(newFormData.Slots * newFormData.EntryFee * ((100-newFormData.PrizePoolPlatformFees)/100));
         //convert to int
 
       }
@@ -259,6 +260,17 @@ const CreateContestForm = () => {
             type="number"
             name="PrizePoolSuggested"
             value={formData.PrizePoolSuggested}
+            onChange={handleChange}
+            required
+            className="form-input"
+          />
+        </label>
+        <label className="form-field">
+        PrizePool Platform Fees
+          <input
+            type="number"
+            name="PrizePoolPlatformFees"
+            value={formData.PrizePoolPlatformFees}
             onChange={handleChange}
             required
             className="form-input"
