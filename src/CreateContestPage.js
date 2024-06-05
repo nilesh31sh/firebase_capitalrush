@@ -52,19 +52,28 @@ const CreateContestForm = () => {
       if (formData.Slots <= 10) {
         if (position === 1) return Math.round(PrizePool * 0.5 / 10) * 10;
         if (position === 2) return Math.round(PrizePool * 0.3 / 10) * 10;
-        return 30; // Assuming you want to keep this as is
+        if(PrizePool<10000)
+          return 10;
+        else
+        return 20;
     } else if (formData.Slots >= 11 && formData.Slots <= 50) {
         if (position === 1) return Math.round(PrizePool * 0.40 / 10) * 10;
         if (position === 2) return Math.round(PrizePool * 0.20 / 10) * 10;
         if (position === 3) return Math.round(PrizePool * 0.04 / 10) * 10;
         if (position === 4) return Math.round((PrizePool * 0.016) / 10) * 10;
-        return 10; // Assuming you want to keep this as is
+        if(PrizePool<10000)
+          return 10;
+        else
+        return 20;
     } else if (formData.Slots >= 51) {
         if (position === 1) return Math.round(PrizePool * 0.35 / 10) * 10;
         if (position === 2) return Math.round(PrizePool * 0.15 / 10) * 10;
         if (position === 3) return Math.round(PrizePool * 0.04 / 10) * 10;
         if (position === 4) return Math.round((PrizePool * 0.016) / 10) * 10;
-        return 10; // Assuming you want to keep this as is
+        if(PrizePool<10000)
+          return 10;
+        else
+        return 20;
     }
     
   };
