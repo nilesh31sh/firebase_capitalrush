@@ -52,24 +52,23 @@ const CreateContestForm = () => {
       if (formData.Slots <= 10) {
         if (position === 1) return Math.round(PrizePool * 0.5 / 10) * 10;
         if (position === 2) return Math.round(PrizePool * 0.3 / 10) * 10;
-        if(PrizePool<10000)
-          return 10;
+        if (position === 3) return Math.round(PrizePool * 0.2 / 10) * 10;
         else
-        return 20;
+        return 0;
     } else if (formData.Slots >= 11 && formData.Slots <= 50) {
-        if (position === 1) return Math.round(PrizePool * 0.40 / 10) * 10;
-        if (position === 2) return Math.round(PrizePool * 0.20 / 10) * 10;
-        if (position === 3) return Math.round(PrizePool * 0.04 / 10) * 10;
-        if (position === 4) return Math.round((PrizePool * 0.016) / 10) * 10;
+        if (position === 1) return Math.round(PrizePool * 0.50 / 10) * 10;
+        if (position === 2) return Math.round(PrizePool * 0.30 / 10) * 10;
+        if (position === 3) return Math.round(PrizePool * 0.1 / 10) * 10;
+        if (position === 4) return Math.round((PrizePool * (0.1/7)) / 10) * 10;
         if(PrizePool<10000)
           return 10;
         else
         return 20;
     } else if (formData.Slots >= 51) {
-        if (position === 1) return Math.round(PrizePool * 0.35 / 10) * 10;
-        if (position === 2) return Math.round(PrizePool * 0.15 / 10) * 10;
-        if (position === 3) return Math.round(PrizePool * 0.04 / 10) * 10;
-        if (position === 4) return Math.round((PrizePool * 0.016) / 10) * 10;
+        if (position === 1) return Math.round(PrizePool * 0.45 / 10) * 10;
+        if (position === 2) return Math.round(PrizePool * 0.25 / 10) * 10;
+        if (position === 3) return Math.round(PrizePool * 0.1 / 10) * 10;
+        if (position === 4) return Math.round((PrizePool * (0.2/7)) / 10) * 10;
         if(PrizePool<10000)
           return 10;
         else
@@ -86,8 +85,8 @@ const CreateContestForm = () => {
       if (['Slots', 'Duration', 'EntryFee', 'PrizePoolSuggested', 'PrizePoolPlatformFees'].includes(name)) {
         const intValue = parseInt(value, 10);
         updatedValue = intValue ? String(Number(intValue)) : '';
-        if (name === 'Slots' && (intValue < 10 || intValue > 500)) {
-          setSlotsError('Slots must be between 10 and 500');
+        if (name === 'Slots' && (intValue < 10 || intValue > 2001)) {
+          setSlotsError('Slots must be between 10 and 2001');
         } else if (name === 'Slots') {
           setSlotsError('');
         }
@@ -160,7 +159,7 @@ const CreateContestForm = () => {
   const createUserObject = (username, ContestID) => ({
     Name: username,
     Email: username + '@gmail.com',
-    Score: Math.floor(Math.random() * (200000 - 50000) + 50000),
+    Score: Math.floor(Math.random() * (500000 - 50000) + 50000),
     ContestID,
     Tickets: 0,
   });
@@ -173,8 +172,8 @@ const CreateContestForm = () => {
       setMessage('Please enter a Contest ID');
       return;
     }
-    if (dataToSubmit.Slots < 10 || dataToSubmit.Slots > 500) {
-      setSlotsError('Slots must be between 10 and 500');
+    if (dataToSubmit.Slots < 10 || dataToSubmit.Slots > 2001) {
+      setSlotsError('Slots must be between 10 and 2001');
       return;
     }
   
@@ -317,7 +316,7 @@ const CreateContestForm = () => {
           />
         </label>
         <label className="form-field">
-          Slots (10 to 500):
+          Slots (10 to 2001):
           <input
             type="number"
             name="Slots"
