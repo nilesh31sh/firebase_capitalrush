@@ -84,7 +84,7 @@ const CreateContestForm = () => {
       let updatedValue = value;
       if (['Slots', 'Duration', 'EntryFee', 'PrizePoolSuggested', 'PrizePoolPlatformFees'].includes(name)) {
         const intValue = parseInt(value, 10);
-        updatedValue = intValue ? String(Number(intValue)) : '';
+        updatedValue = Number.isNaN(intValue) ? '' : String(intValue);
         if (name === 'Slots' && (intValue < 10 || intValue > 2001)) {
           setSlotsError('Slots must be between 10 and 2001');
         } else if (name === 'Slots') {
