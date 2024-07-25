@@ -26,6 +26,9 @@ const Sidebar = ({ isOpen, toggle }) => {
         <li>
           <Link to="/reports" onClick={toggle}>Reports Display</Link>
         </li>
+        <li>
+          <Link to="/transactions" onClick={toggle}>Transactions</Link>
+        </li>
         {/* Add more sidebar menu items as needed */}
       </ul>
     </div>
