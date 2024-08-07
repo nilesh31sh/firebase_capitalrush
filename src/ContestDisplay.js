@@ -1,8 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useTable, usePagination, useFilters, useSortBy } from 'react-table';
 import { Link } from 'react-router-dom';
-import { database } from './firebase';
-import { ref, onValue } from 'firebase/database';
+import { db } from './firebase'; // Ensure this imports your Firestore instance
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import './ContestDisplay.css';
 
 const ContestDisplay = () => {
@@ -13,25 +13,29 @@ const ContestDisplay = () => {
   const [filterInputDuration, setFilterInputDuration] = useState('');
 
   useEffect(() => {
-    const contestRef = ref(database, 'CONTESTS');
-    const unsubscribe = onValue(contestRef, (snapshot) => {
-      const snapshotData = snapshot.val() || {};
-      const formattedData = Object.entries(snapshotData).map(([id, entry]) => ({
-        id,
-        ...entry
-      }));
-      setData(formattedData);
-      setLoading(false);
-    }, (error) => {
-      setError('Failed to load data');
-      setLoading(false);
-    });
+    const fetchContestData = async () => {
+      try {
+        const contestsCollection = collection(db, 'CONTESTS');
+        const querySnapshot = await getDocs(contestsCollection);
+        const formattedData = querySnapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }))
+          .filter(contest => contest.ContestID !== undefined); // Filter out contests without ContestID
 
-    return () => unsubscribe();
+        setData(formattedData);
+        setLoading(false);
+      } catch (error) {
+        setError('Failed to load data');
+        setLoading(false);
+      }
+    };
+
+    fetchContestData();
   }, []);
 
   const filterTypes = useMemo(() => ({
-    // Add a new fuzzyText filter type.
     fuzzyText: (rows, id, filterValue) => {
       return rows.filter(row => {
         const rowValue = row.values[id];
@@ -40,7 +44,6 @@ const ContestDisplay = () => {
           : true;
       });
     },
-    // Add a new startsWith filter type.
     startsWith: (rows, id, filterValue) => {
       return rows.filter(row => {
         const rowValue = row.values[id];
@@ -52,13 +55,12 @@ const ContestDisplay = () => {
   }), []);
 
   const defaultColumn = useMemo(() => ({
-    // Let's set up our default Filter UI
     Filter: ({ column: { filterValue, setFilter, preFilteredRows, id } }) => {
       return (
         <input
           value={filterValue || ''}
           onChange={e => {
-            setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
+            setFilter(e.target.value || undefined);
           }}
           placeholder={`Search ${id}`}
         />
@@ -66,8 +68,28 @@ const ContestDisplay = () => {
     }
   }), []);
 
+  const handleDelete = async (contestId) => {
+    try {
+      const contestDocRef = doc(db, 'CONTESTS', contestId);
+      await deleteDoc(contestDocRef);
+      setData(prevData => prevData.filter(contest => contest.id !== contestId));
+      console.log(`Contest ${contestId} deleted successfully`);
+    } catch (error) {
+      console.error(`Error deleting contest ${contestId}:`, error);
+    }
+  };
+
   const columns = useMemo(() => {
     const manualColumns = [
+      {
+        Header: 'Actions',
+        id: 'actions',
+        Cell: ({ row }) => (
+          <button onClick={() => handleDelete(row.original.id)}>
+            Delete
+          </button>
+        )
+      },
       {
         Header: 'ContestID',
         accessor: 'ContestID'
@@ -81,7 +103,7 @@ const ContestDisplay = () => {
         accessor: 'StartTime'
       },
       {
-        Header: '   EndTime   ',
+        Header: 'EndTime',
         accessor: 'EndTime'
       },
       {
@@ -118,7 +140,6 @@ const ContestDisplay = () => {
         Header: 'FourthPrize',
         accessor: 'FourthPrize'
       },
-
       {
         Header: 'FifthPrize',
         accessor: 'FifthPrize'
@@ -135,8 +156,6 @@ const ContestDisplay = () => {
         Header: 'PrizePoolToShow',
         accessor: 'PrizePoolToShow'
       },
-
-      // ... other manually defined columns ...
     ];
 
     const additionalColumns = data.length > 0 
@@ -148,18 +167,14 @@ const ContestDisplay = () => {
               Cell: ({ value }) => {
                 if (value && typeof value === 'object' && !(value instanceof Date)) {
                   const stringValue = JSON.stringify(value, null);
-                  //return span with class name cell-truncate
-                  if (stringValue.length > 30){
+                  if (stringValue.length > 30) {
                     return <span className="cell-truncate" title={stringValue}>{stringValue.substring(0, 30) + "..."}</span>;
                   }
                   return <span className="cell-truncate" title={stringValue}>{stringValue}</span>;
-
                 }
-                //if boolean value then return true or false
                 if (typeof value === 'boolean') {
                   return value ? 'True' : 'False';
                 }
-                
                 return value;
               }
             });
@@ -168,58 +183,55 @@ const ContestDisplay = () => {
       }, [])
       : [];
 
-  // This is where you combine manualColumns and additionalColumns
-  return [...manualColumns, ...additionalColumns];
-}, [data]); // Dependency array for useMemo
+    return [...manualColumns, ...additionalColumns];
+  }, [data]);
 
+  const initialState = { pageIndex: 0, sortBy: [{ id: 'StartTime', desc: false }] };
 
-const initialState = { pageIndex: 0, sortBy: [{ id: 'StartTime', desc: false }] }; // Assuming 'StartTime' is the correct accessor
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    prepareRow,
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    nextPage,
+    previousPage,
+    setAllFilters,
+    state: { pageIndex },
+  } = useTable(
+    {
+      columns,
+      data,
+      initialState,
+      defaultColumn,
+      filterTypes,
+    },
+    useFilters,
+    useSortBy,
+    usePagination,
+  );
 
+  const handleFilterChangeMatchType = e => {
+    const value = e.target.value || undefined;
+    setAllFilters(filters => [
+      ...filters.filter(filter => filter.id !== 'MatchType'),
+      { id: 'MatchType', value: value }
+    ]);
+    setFilterInputMatchType(value);
+  };
 
-const {
-  getTableProps,
-  getTableBodyProps,
-  headerGroups,
-  prepareRow,
-  page,
-  canPreviousPage,
-  canNextPage,
-  pageOptions,
-  nextPage,
-  previousPage,
-  setAllFilters,
-  state: { pageIndex },
-} = useTable(
-  {
-    columns,
-    data,
-    initialState, // Use the initialState
-    defaultColumn, // Be sure to pass the defaultColumn option
-    filterTypes,
-  },
-  useFilters,
-  useSortBy ,
-  usePagination,
-  // Add useSortBy hook here
-);
+  const handleFilterChangeDuration = e => {
+    const value = e.target.value || undefined;
+    setAllFilters(filters => [
+      ...filters.filter(filter => filter.id !== 'Duration'),
+      { id: 'Duration', value: value }
+    ]);
+    setFilterInputDuration(value);
+  };
 
-const handleFilterChangeMatchType = e => {
-  const value = e.target.value || undefined;
-  setAllFilters(filters => [
-    ...filters.filter(filter => filter.id !== 'MatchType'),
-    { id: 'MatchType', value: value }
-  ]);
-  setFilterInputMatchType(value);
-};
-
-const handleFilterChangeDuration = e => {
-  const value = e.target.value || undefined;
-  setAllFilters(filters => [
-    ...filters.filter(filter => filter.id !== 'Duration'),
-    { id: 'Duration', value: value }
-  ]);
-  setFilterInputDuration(value);
-};
   if (loading) {
     return <p>Loading contest data...</p>;
   }
@@ -234,76 +246,75 @@ const handleFilterChangeDuration = e => {
 
   return (
     <div className='container-everything'>
-<h2>Contest Details</h2>
+      <h2>Contest Details</h2>
         
-        <div class="filter-container"> 
-          <label class="filter-label">
-            Match Type : 
-            <input
-              class="filter-input"
-              value={filterInputMatchType}
-              onChange={handleFilterChangeMatchType}
-              placeholder="Filter by Match Type"
-            />
-          </label>
+      <div className="filter-container"> 
+        <label className="filter-label">
+          Match Type: 
+          <input
+            className="filter-input"
+            value={filterInputMatchType}
+            onChange={handleFilterChangeMatchType}
+            placeholder="Filter by Match Type"
+          />
+        </label>
         
-          <label class="filter-label">
-            Duration :  
-            <input
-              class="filter-input"
-              value={filterInputDuration}
-              onChange={handleFilterChangeDuration}
-              placeholder="Filter by Duration"
-            />
-          </label>
-        </div>
+        <label className="filter-label">
+          Duration:  
+          <input
+            className="filter-input"
+            value={filterInputDuration}
+            onChange={handleFilterChangeDuration}
+            placeholder="Filter by Duration"
+          />
+        </label>
+      </div>
         
-      
       <div className="table-container">
-      <table {...getTableProps()} className="contest-table">
-      <thead>
-      {headerGroups.map(headerGroup => (
-        <tr {...headerGroup.getHeaderGroupProps()}>
-          {headerGroup.headers.map(column => (
-            <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-              {column.render('Header')}
-              <span>
-                {column.isSorted
-                  ? (column.isSortedDesc ? ' 🔽' : ' 🔼')
-                  : ' ↕️'} {/* Default indicator for unsorted columns */}
-              </span>
-            </th>
-          ))}
-        </tr>
-      ))}
-    </thead>
-        <tbody {...getTableBodyProps()}>
-          {page.map(row => {
-            prepareRow(row);
-            return (
-              <tr {...row.getRowProps()}>
-                {row.cells.map(cell => (
-                  <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+        <table {...getTableProps()} className="contest-table">
+          <thead>
+            {headerGroups.map(headerGroup => (
+              <tr {...headerGroup.getHeaderGroupProps()}>
+                {headerGroup.headers.map(column => (
+                  <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                    {column.render('Header')}
+                    <span>
+                      {column.isSorted
+                        ? (column.isSortedDesc ? ' 🔽' : ' 🔼')
+                        : ' ↕️'}
+                    </span>
+                  </th>
                 ))}
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      <div className="pagination">
-        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
-          {'<'}
-        </button>{' '}
-        <button onClick={() => nextPage()} disabled={!canNextPage}>
-          {'>'}
-        </button>
-        <span>
-          Page{' '}
-          <strong>
-            {pageIndex + 1} of {pageOptions.length}
-          </strong>{' '}
-        </span>
-      </div>
+            ))}
+          </thead>
+          <tbody {...getTableBodyProps()}>
+            {page.map(row => {
+              prepareRow(row);
+              return (
+                <tr {...row.getRowProps()}>
+                  {row.cells.map(cell => (
+                    <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        <div className="pagination">
+          <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+            {'<'}
+          </button>{' '}
+          <button onClick={() => nextPage()} disabled={!canNextPage}>
+            {'>'}
+          </button>
+          <span>
+            Page{' '}
+            <strong>
+              {pageIndex + 1} of {pageOptions.length}
+            </strong>{' '}
+          </span>
+        </div>
       </div>
     </div>
   );

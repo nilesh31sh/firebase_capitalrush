@@ -1,8 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useTable, usePagination } from 'react-table';
+import { useTable } from 'react-table';
 import { Link } from 'react-router-dom';
-import { database } from './firebase';
-import { ref, onValue, update } from 'firebase/database';
+import { db } from './firebase'; // Ensure db is correctly exported from your firebase configuration
+import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 import './UserDisplay.css';
 
 const UserDisplay = () => {
@@ -11,114 +11,106 @@ const UserDisplay = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const userRef = ref(database, 'USERS');
-    const unsubscribe = onValue(userRef, (snapshot) => {
-      const snapshotData = snapshot.val() || {};
-      const formattedData = Object.entries(snapshotData)
-        .map(([id, entry]) => ({
-          id,
-          ...entry
-        }))
-        .sort((a, b) => (b.IsRequestingWithdrawal === true) ? 1 : -1);
+    const fetchUserData = async () => {
+      try {
+        const usersCollection = collection(db, 'USERS');
+        const querySnapshot = await getDocs(usersCollection);
+        const formattedData = querySnapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }))
+          .sort((a, b) => (b.IsRequestingWithdrawal === true) ? 1 : -1);
 
-      setData(formattedData);
-      setLoading(false);
-    }, (error) => {
-      setError('Failed to load data');
-      setLoading(false);
-    });
+        setData(formattedData);
+        setLoading(false);
+      } catch (error) {
+        setError('Failed to load data');
+        setLoading(false);
+      }
+    };
 
-    return () => unsubscribe();
+    fetchUserData();
   }, []);
 
   // Function to handle the withdrawal status change
-  const handleWithdrawalStatusChange = (userId) => {
-    const updates = {};
-    updates[`/USERS/${userId}/IsRequestingWithdrawal`] = false;
-    updates[`/USERS/${userId}/WithdrawalAmount`] = 0;
-
-    update(ref(database), updates)
-      .then(() => {
-        console.log('Withdrawal status updated for user:', userId);
-        // Optionally, refresh the data in your component here
-      })
-      .catch((error) => {
-        console.error('Error updating withdrawal status:', error);
+  const handleWithdrawalStatusChange = async (userId) => {
+    try {
+      const userDocRef = doc(db, `USERS/${userId}`);
+      await updateDoc(userDocRef, {
+        IsRequestingWithdrawal: false,
+        WithdrawalAmount: 0
       });
+      console.log('Withdrawal status updated for user:', userId);
+      // Optionally, refresh the data in your component here
+      setData(prevData => prevData.map(user =>
+        user.id === userId ? { ...user, IsRequestingWithdrawal: false, WithdrawalAmount: 0 } : user
+      ));
+    } catch (error) {
+      console.error('Error updating withdrawal status:', error);
+    }
   };
 
   const columns = useMemo(() => {
     if (data.length === 0) {
       return [];
     }
-    // ... [existing columns setup]
-        // Manually defined columns
-        const manualColumns = [
-          {
-            Header: 'User ID',
-            accessor: 'id',
-          },
-          {
-            Header: 'myContestsJoined',
-            accessor: 'myContestsJoined',
-            Cell: ({ row }) => <Link to={`/users/${row.original.id}/myContestsJoined`}>View Contests</Link>,
-          },
-          {
-            Header: 'myContestsCompleted',
-            accessor: 'myContestsCompleted',
-            Cell: ({ row }) => <Link to={`/users/${row.original.id}/myContestsCompleted`}>View Contests</Link>,
-          },
-          {
-            Header: 'Is Requesting Withdrawal',
-            accessor: 'IsRequestingWithdrawal',
-            // its a boolean
-            Cell: ({ value }) => value ? 'True' : 'False'
-          },
-          {
-            Header: 'Withdrawal Amount',
-            accessor: 'WithdrawalAmount',
-          },
-          {
-            Header: 'Winning Amount',
-            accessor: 'WinningAmount',
-          }
-        ];
-        
-    
-    
-    
-    
-        // Extract keys from data for additional columns
-        const additionalColumns = data.length > 0
-          ? Object.keys(data[0]).reduce((acc, key) => {
-            if (!manualColumns.find(col => col.accessor === key)) {
-              acc.push({
-                Header: key.charAt(0).toUpperCase() + key.slice(1),
-                accessor: key,
-                Cell: ({ value }) => {
-                  if (value && typeof value === 'object' && !(value instanceof Date)) {
-                    const stringValue = JSON.stringify(value, null);
-                    //return span with class name cell-truncate
-                    if (stringValue.length > 30) {
-                      return <span className="cell-truncate" title={stringValue}>{stringValue.substring(0, 30) + "..."}</span>;
-                    }
-                    return <span className="cell-truncate" title={stringValue}>{stringValue}</span>;
-    
-                  }
-                  //if boolean value then return true or false
-                  if (typeof value === 'boolean') {
-                    return value ? 'True' : 'False';
-                  }
-    
-                  return value;
-                }
-              });
-            }
-            return acc;
-          }, [])
-          : [];
 
-    // Add a new column for the button
+    const manualColumns = [
+      {
+        Header: 'User ID',
+        accessor: 'id',
+      },
+      {
+        Header: 'myContestsJoined',
+        accessor: 'myContestsJoined',
+        Cell: ({ row }) => <Link to={`/users/${row.original.id}/myContestsJoined`}>View Contests</Link>,
+      },
+      {
+        Header: 'myContestsCompleted',
+        accessor: 'myContestsCompleted',
+        Cell: ({ row }) => <Link to={`/users/${row.original.id}/myContestsCompleted`}>View Contests</Link>,
+      },
+      {
+        Header: 'Is Requesting Withdrawal',
+        accessor: 'IsRequestingWithdrawal',
+        Cell: ({ value }) => value ? 'True' : 'False'
+      },
+      {
+        Header: 'Withdrawal Amount',
+        accessor: 'WithdrawalAmount',
+      },
+      {
+        Header: 'Winning Amount',
+        accessor: 'WinningAmount',
+      }
+    ];
+
+    const additionalColumns = data.length > 0
+      ? Object.keys(data[0]).reduce((acc, key) => {
+        if (!manualColumns.find(col => col.accessor === key)) {
+          acc.push({
+            Header: key.charAt(0).toUpperCase() + key.slice(1),
+            accessor: key,
+            Cell: ({ value }) => {
+              if (value && typeof value === 'object' && !(value instanceof Date)) {
+                const stringValue = JSON.stringify(value, null, 2);
+                if (stringValue.length > 30) {
+                  return <span className="cell-truncate" title={stringValue}>{stringValue.substring(0, 30) + "..."}</span>;
+                }
+                return <span className="cell-truncate" title={stringValue}>{stringValue}</span>;
+              }
+              if (typeof value === 'boolean') {
+                return value ? 'True' : 'False';
+              }
+              return value;
+            }
+          });
+        }
+        return acc;
+      }, [])
+      : [];
+
     const actionColumn = {
       Header: 'Actions',
       id: 'actions',
@@ -133,78 +125,51 @@ const UserDisplay = () => {
       ),
     };
 
-    return [actionColumn, ...manualColumns,  ...additionalColumns];
+    return [actionColumn, ...manualColumns, ...additionalColumns];
   }, [data]);
 
-  const tableInstance = useTable(
-    { columns, data, initialState: { pageIndex: 0 } },
-    usePagination
-  );
+  const tableInstance = useTable({ columns, data });
 
-  // Destructure the required properties and methods from the table instance
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
     prepareRow,
-    page,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    nextPage,
-    previousPage,
-    state: { pageIndex },
+    rows
   } = tableInstance;
-  // ... [rest of your existing table setup]
 
   if (loading) return <p>Loading user data...</p>;
   if (error) return <p>{error}</p>;
   if (data.length === 0) return <p>No user data available</p>;
 
-
   return (
     <div className='container-everything'>
       <h2>User Details</h2>
       <div className='table-container'>
-      <table {...getTableProps()} className="user-table">
-        <thead>
-          {headerGroups.map(headerGroup => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map(column => (
-                <th {...column.getHeaderProps()}>{column.render('Header')}</th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody {...getTableBodyProps()}>
-          {page.map(row => {
-            prepareRow(row);
-            const IsRequestingWithdrawal = row.original.IsRequestingWithdrawal; // Get the value
-            return (
-              <tr {...row.getRowProps()} className={IsRequestingWithdrawal ? 'user-request-withdrawal' : ''}>
-                {row.cells.map(cell => (
-                  <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+        <table {...getTableProps()} className="user-table">
+          <thead>
+            {headerGroups.map(headerGroup => (
+              <tr {...headerGroup.getHeaderGroupProps()}>
+                {headerGroup.headers.map(column => (
+                  <th {...column.getHeaderProps()}>{column.render('Header')}</th>
                 ))}
               </tr>
-            );
-          })}
-        </tbody>
-
-      </table>
-      <div className="pagination">
-        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
-          {'<'}
-        </button>
-        <button onClick={() => nextPage()} disabled={!canNextPage}>
-          {'>'}
-        </button>
-        <span>
-          Page{' '}
-          <strong>
-            {pageIndex + 1} of {pageOptions.length}
-          </strong>
-        </span>
-      </div>
+            ))}
+          </thead>
+          <tbody {...getTableBodyProps()}>
+            {rows.map(row => {
+              prepareRow(row);
+              const IsRequestingWithdrawal = row.original.IsRequestingWithdrawal;
+              return (
+                <tr {...row.getRowProps()} className={IsRequestingWithdrawal ? 'user-request-withdrawal' : ''}>
+                  {row.cells.map(cell => (
+                    <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );

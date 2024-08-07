@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { database } from './firebase';
-import { ref, onValue } from 'firebase/database';
-
+import { db } from './firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import './ContestantsView.css';
 
 const ContestantsView = () => {
@@ -10,16 +9,22 @@ const ContestantsView = () => {
   const { contestId } = useParams(); // Getting contestId from URL parameters
 
   useEffect(() => {
-    const contestRef = ref(database, `CONTESTS/${contestId}/Contestants`);
-    const unsubscribe = onValue(contestRef, (snapshot) => {
-      const contestantsData = snapshot.val();
-      if (contestantsData) {
-        const contestantsArray = Object.values(contestantsData);
+    const fetchContestants = async () => {
+      try {
+        // Reference to the Contestants collection within the specific contest
+        const contestantsCollection = collection(db, 'CONTESTS', contestId, 'Contestants');
+        const querySnapshot = await getDocs(contestantsCollection);
+        const contestantsArray = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
         setContestants(contestantsArray);
+      } catch (error) {
+        console.error("Error fetching contestants: ", error);
       }
-    });
+    };
 
-    return () => unsubscribe();
+    fetchContestants();
   }, [contestId]);
 
   // Aggregate headers by iterating through the first contestant's properties

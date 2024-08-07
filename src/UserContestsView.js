@@ -1,38 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { database } from './firebase';
-import { ref, onValue } from 'firebase/database';
+import { db } from './firebase'; // Ensure db is correctly exported from your firebase configuration
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useTable } from 'react-table';
 
 import './ContestantsView.css';
 
 const UserContestsView = () => {
   const [userContests, setUserContests] = useState([]);
-  const { userId, contestType } = useParams(); // Now includes contestType
+  const { userId, contestType } = useParams(); // Includes contestType
 
   useEffect(() => {
-    const contestRefPath = `USERS/${userId}/${contestType}`; // Dynamic path based on contestType
-    const userContestsRef = ref(database, contestRefPath);
-    const unsubscribe = onValue(userContestsRef, (snapshot) => {
-      const userContestsData = snapshot.val();
-      if (userContestsData) {
-        const userContestsArray = Object.entries(userContestsData).map(([id, details]) => ({ id, ...details }));
-        setUserContests(userContestsArray);
-      }
-    });
+    const fetchContests = async () => {
+      try {
+        const contestsCollection = collection(db, `USERS/${userId}/${contestType}`);
+        const contestsQuery = query(contestsCollection);
+        const querySnapshot = await getDocs(contestsQuery);
 
-    return () => unsubscribe();
+        const contestsData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setUserContests(contestsData);
+      } catch (error) {
+        console.error('Error fetching contests:', error);
+      }
+    };
+
+    fetchContests();
   }, [userId, contestType]); // Dependency array includes contestType
 
   // Define columns for react-table
   const columns = React.useMemo(() => {
     return userContests.length > 0
-      ? Object.keys(userContests[0]).map(header => {
-          return {
-            Header: header,
-            accessor: header
-          };
-        })
+      ? Object.keys(userContests[0]).map(header => ({
+          Header: header,
+          accessor: header,
+        }))
       : [];
   }, [userContests]);
 
@@ -44,7 +49,7 @@ const UserContestsView = () => {
     prepareRow,
   } = useTable({
     columns,
-    data: userContests
+    data: userContests,
   });
 
   return (
@@ -68,9 +73,9 @@ const UserContestsView = () => {
             prepareRow(row);
             return (
               <tr {...row.getRowProps()}>
-                {row.cells.map(cell => {
-                  return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>;
-                })}
+                {row.cells.map(cell => (
+                  <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                ))}
               </tr>
             );
           })}

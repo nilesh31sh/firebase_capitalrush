@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { database } from './firebase';
-import { ref, onValue, update } from 'firebase/database';
+import { db } from './firebase';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import './ReportDisplay.css';
 
 const ReportDisplay = () => {
@@ -13,10 +13,14 @@ const ReportDisplay = () => {
   const [statusFilter, setStatusFilter] = useState(''); // New state for status filter
 
   useEffect(() => {
-    const reportsRef = ref(database, 'HELP_REPORT');
-    onValue(reportsRef, (snapshot) => {
-      const reportsData = snapshot.val();
-      if (reportsData) {
+    const fetchReports = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'HELP_REPORT'));
+        const reportsData = {};
+        querySnapshot.forEach((doc) => {
+          reportsData[doc.id] = doc.data();
+        });
+
         setReports(reportsData);
 
         const allKeys = new Set(['status']);
@@ -26,17 +30,19 @@ const ReportDisplay = () => {
           });
         });
         setHeaders([...allKeys]);
+      } catch (errorObject) {
+        setError(errorObject.message);
       }
       setLoading(false);
-    }, (errorObject) => {
-      setError(errorObject.message);
-      setLoading(false);
-    });
+    };
+
+    fetchReports();
   }, []);
 
-  const handleStatusChange = (reportId, newStatus) => {
+  const handleStatusChange = async (reportId, newStatus) => {
     const isSolved = newStatus === 'Complete';
-    update(ref(database, `/HELP_REPORT/${reportId}`), { status: newStatus, Solved: isSolved });
+    const reportRef = doc(db, 'HELP_REPORT', reportId);
+    await updateDoc(reportRef, { status: newStatus, Solved: isSolved });
   };
 
   const filteredReports = useMemo(() => {

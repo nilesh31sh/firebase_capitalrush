@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { database } from './firebase';
-import { ref, onValue } from 'firebase/database';
+import { db } from './firebase'; // Ensure `db` is exported from your firebase configuration file
+import { collection, getDocs } from 'firebase/firestore';
 import './Transactions.css';
 
 const Transactions = () => {
@@ -10,22 +10,47 @@ const Transactions = () => {
 
   useEffect(() => {
     console.log('Attempting to fetch transactions data...');
-    const transactionsRef = ref(database, '/TRANSCATION_HISTORY');
-    onValue(transactionsRef, (snapshot) => {
-      const transactionsData = snapshot.val();
-      console.log('Fetched Transactions Data:', transactionsData); // Debugging log
-      if (transactionsData) {
+
+    const fetchTransactions = async () => {
+      try {
+        const transactionHistoryCollection = collection(db, 'TRANSCATION_HISTORY');
+        const phoneNumberSnapshot = await getDocs(transactionHistoryCollection);
+        
+        if (phoneNumberSnapshot.empty) {
+          console.warn('No phone numbers found in TRANSACTION_HISTORY');
+          setTransactions({});
+          setLoading(false);
+          return;
+        }
+
+        const transactionsData = {};
+
+        for (const phoneNumberDoc of phoneNumberSnapshot.docs) {
+          const phoneNumber = phoneNumberDoc.id;
+          console.log(`Fetching transactions for phone number: ${phoneNumber}`);
+          
+          const userTransactionsCollection = collection(db, 'TRANSCATION_HISTORY', phoneNumber, phoneNumber);
+          const userTransactionsSnapshot = await getDocs(userTransactionsCollection);
+
+          const userTransactions = userTransactionsSnapshot.docs.reduce((acc, transactionDoc) => {
+            acc[transactionDoc.id] = transactionDoc.data();
+            return acc;
+          }, {});
+
+          transactionsData[phoneNumber] = userTransactions;
+        }
+
+        console.log('Fetched Transactions Data:', transactionsData); // Debugging log
         setTransactions(transactionsData);
-      } else {
-        console.warn('No transactions data found at TRANSACTION_HISTORY');
-        setTransactions({});
+      } catch (errorObject) {
+        console.error('Firestore Error:', errorObject); // Debugging log
+        setError(errorObject.message);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }, (errorObject) => {
-      console.error('Firebase Error:', errorObject); // Debugging log
-      setError(errorObject.message);
-      setLoading(false);
-    });
+    };
+
+    fetchTransactions();
   }, []);
 
   if (loading) return <div className="loading">Loading transactions...</div>;
