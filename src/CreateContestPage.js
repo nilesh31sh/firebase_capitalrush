@@ -3,6 +3,7 @@ import { db } from './firebase';
 import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
 import Papa from 'papaparse'; // Ensure papaparse is installed
 import './ContestForm.css';
+import { Timestamp } from 'firebase/firestore';
 
 const CreateContestForm = () => {
   const [formData, setFormData] = useState({
@@ -152,7 +153,7 @@ const CreateContestForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const { ManualContestID, botIndexUsed, ...dataToSubmit } = formData;
-
+  
     if (!dataToSubmit.ContestID) {
       setMessage('Please enter a Contest ID');
       return;
@@ -161,11 +162,12 @@ const CreateContestForm = () => {
       setSlotsError('Slots must be between 10 and 2001');
       return;
     }
-
+  
     const formattedStartTime = formatDate(new Date(dataToSubmit.StartTime.replace('T', ' ')));
     const endTime = new Date(new Date(dataToSubmit.StartTime.replace('T', ' ')).getTime() + dataToSubmit.Duration * 60 * 60 * 1000);
-    const formattedEndTime = formatDate(endTime);
-
+  
+    const contestEndTime = Timestamp.fromDate(endTime);
+  
     setMessage('Selecting bots; please wait...');
     const { selectedUsers } = await pickRandomUsers(dataToSubmit.ContestID, async (updatedFormData) => {
       setMessage('Trying to Store contest; please wait...');
@@ -178,21 +180,24 @@ const CreateContestForm = () => {
           ...updatedFormData,
           Contestants: [],
           StartTime: formattedStartTime,
-          EndTime: formattedEndTime,
+          EndTime: formatDate(endTime),
+          ContestEndTime: contestEndTime,
         });
-
+  
         const contestantsCollectionRef = collection(db, 'CONTESTS', updatedFormData.ContestID, 'Contestants');
         selectedUsers.forEach(async (user) => {
           const contestantRef = doc(contestantsCollectionRef, user.Email);
           await setDoc(contestantRef, user);
         });
-
+  
         setMessage('Contest created successfully');
         setFormData({ ...updatedFormData, Contestants: [] });
         setContestCount(contestCount + 1);
       }
     });
   };
+  
+
   function formatDate(date) {
     const pad = num => String(num).padStart(2, '0');
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
@@ -329,4 +334,3 @@ const CreateContestForm = () => {
 };
 
 export default CreateContestForm;
-
