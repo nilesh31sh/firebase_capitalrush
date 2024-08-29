@@ -164,3 +164,15 @@ body {
     color: #d9534f;
   }
       
+  .delete-button {
+    background-color: #ff4d4d; /* Red background color */
+    color: white; /* White text color */
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  
+  .delete-button:hover {
+    background-color: #ff0000; /* Darker red on hover */
+  }
