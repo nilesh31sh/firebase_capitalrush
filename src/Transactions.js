@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db } from './firebase'; // Ensure db is correctly exported from your firebase configuration
+import { db } from './firebase';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import './Transactions.css';
 
@@ -12,13 +12,11 @@ const TRANSACTION_TYPE_MAP = {
   4: { text: 'Null', color: 'grey', bgColor: 'lightgrey' }
 };
 
-// Date threshold for amount adjustment
-const DATE_THRESHOLD = new Date('2024-08-30T00:00:00Z');
-
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
 
   useEffect(() => {
     const fetchPhoneNumbers = async () => {
@@ -41,7 +39,6 @@ const Transactions = () => {
 
     const fetchAllTransactions = async (phoneNumbers) => {
       try {
-        // Fetch all transactions in parallel
         const transactionsData = await Promise.all(
           phoneNumbers.map(async (phoneNumber) => {
             const transactionsCollection = collection(db, 'TRANSCATION_HISTORY', phoneNumber, phoneNumber);
@@ -54,7 +51,6 @@ const Transactions = () => {
           })
         );
 
-        // Flatten the array of arrays into a single array
         const allTransactions = transactionsData.flat();
         setTransactions(allTransactions);
         setLoading(false);
@@ -73,7 +69,6 @@ const Transactions = () => {
       await deleteDoc(transactionDocRef);
       console.log('Transaction deleted:', transactionId);
 
-      // Remove the deleted transaction from the state
       setTransactions(prevTransactions =>
         prevTransactions.filter(tx => tx.id !== transactionId || tx.phoneNumber !== phoneNumber)
       );
@@ -84,15 +79,14 @@ const Transactions = () => {
   };
 
   const formatAmount = (amount, type) => {
-    if (type === 1) { // If transaction type is failed
-      return (parseInt(amount) / 100).toString(); // Divide amount by 100
+    if (type === 1) {
+      return (parseInt(amount) / 100).toString();
     }
-    return amount.toString(); // Ensure all amounts are in string format
+    return amount.toString();
   };
 
   const getStatusStyles = (type) => {
     const status = TRANSACTION_TYPE_MAP[type] || TRANSACTION_TYPE_MAP[4];
-    // Apply dark grey background only for specific text colors
     const bgColor = (status.color === 'blue' || status.color === 'yellow') ? 'darkgrey' : status.bgColor;
     return {
       color: status.color,
@@ -100,6 +94,55 @@ const Transactions = () => {
       padding: '5px',
       borderRadius: '4px'
     };
+  };
+
+  const parseDate = (dateString) => {
+    // Try to handle various known formats
+    const formats = [
+      { regex: /^(\d{2})-(\d{2})-(\d{4}) (\d{2}):(\d{2}):(\d{2})$/, map: (d) => `${d[3]}-${d[2]}-${d[1]}T${d[4]}:${d[5]}:${d[6]}` },
+      { regex: /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})$/, map: (d) => `${d[3]}-${d[2]}-${d[1]}T${d[4]}:${d[5]}:${d[6]}` },
+      { regex: /^(\d{1,2})\/(\d{1,2})\/(\d{4}) (\d{1,2}):(\d{2}):(\d{2}) (AM|PM)$/, map: (d) => new Date(`${d[3]}-${d[1].padStart(2, '0')}-${d[2].padStart(2, '0')} ${d[4].padStart(2, '0')}:${d[5]}:${d[6]} ${d[7]}`).toISOString() }
+    ];
+
+    for (const { regex, map } of formats) {
+      const match = dateString.match(regex);
+      if (match) {
+        return new Date(map(match));
+      }
+    }
+
+    // Fallback: attempt to parse any other format
+    const parsedDate = new Date(dateString);
+    return isNaN(parsedDate.getTime()) ? null : parsedDate;
+  };
+
+  const formatDisplayDate = (dateString) => {
+    const date = parseDate(dateString);
+    if (!date) {
+      return `Invalid Date (Original: ${dateString})`;
+    }
+    return date.toLocaleString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
+
+  const sortTransactionsByDate = () => {
+    const sortedTransactions = [...transactions].sort((a, b) => {
+      const dateA = parseDate(a.InvoiceDate);
+      const dateB = parseDate(b.InvoiceDate);
+      if (dateA && dateB) {
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      }
+      return 0;
+    });
+
+    setTransactions(sortedTransactions);
+    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
   if (loading) return <div className="loading">Loading transactions...</div>;
@@ -119,7 +162,13 @@ const Transactions = () => {
               <th>Customer Name</th>
               <th>Customer Email</th>
               <th>Amount</th>
-              <th>Invoice Date</th>
+              <th>
+                Invoice Date
+                <br />
+                <button onClick={sortTransactionsByDate} className="sort-button">
+                  Sort {sortOrder === 'asc' ? '↑' : '↓'}
+                </button>
+              </th>
               <th>Invoice Number</th>
               <th>Transaction Title</th>
               <th>Status</th>
@@ -134,7 +183,7 @@ const Transactions = () => {
                 <td>{transaction.CustomerName}</td>
                 <td>{transaction.CustomerEmail}</td>
                 <td>{formatAmount(transaction.Amount, transaction._TranscationType)}</td>
-                <td>{transaction.InvoiceDate}</td>
+                <td>{formatDisplayDate(transaction.InvoiceDate)}</td>
                 <td>{transaction.InvoiceNumber}</td>
                 <td>{transaction.TranscationTitle}</td>
                 <td>
