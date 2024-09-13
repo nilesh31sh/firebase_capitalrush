@@ -130,7 +130,7 @@ const CreateContestForm = () => {
       const randomIndex = Math.floor(Math.random() * IndicesLeft.length);
       selectedIndices.push(IndicesLeft[randomIndex]);
       IndicesLeft.splice(randomIndex, 1);
-      selectedUsers.push(createUserObject(users[selectedIndices[selectedIndices.length - 1]], ContestID));
+      selectedUsers.push(createUserObject(users[selectedIndices[selectedIndices.length - 1]], ContestID, formData.EntryFee));
     }
 
     setFormData(prevFormData => {
@@ -142,13 +142,26 @@ const CreateContestForm = () => {
     return { selectedUsers };
   };
 
-  const createUserObject = (username, ContestID) => ({
-    Name: username,
-    Email: username + '@gmail.com',
-    Score: Math.floor(Math.random() * (500000 - 50000) + 50000),
-    ContestID,
-    Tickets: 0,
-  });
+  const createUserObject = (username, ContestID, EntryFee) => {
+    let portfolioTarget = 300000; // Default portfolio target
+    
+    // Determine portfolio target based on MatchType and EntryFee
+    if (formData.MatchType === 'Mahasangram' || formData.MatchType === 'Gold_Gala' || formData.MatchType === 'Silver_Summit' || formData.MatchType === 'Quick_Gainer_Challenge') {
+      if (EntryFee === 1000 || EntryFee === 500 || EntryFee === 250) {
+        portfolioTarget = 400000; // Set for higher entry fees
+      } else if (EntryFee === 200 || EntryFee === 100 || EntryFee === 50) {
+        portfolioTarget = 300000; // Set for lower entry fees
+      }
+    }
+    
+    return {
+      Name: username,
+      Email: username + '@gmail.com',
+      Score: Math.floor(Math.random() * (portfolioTarget - 50000) + 50000), // Bot score based on portfolio target
+      ContestID,
+      Tickets: 0,
+    };
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -202,6 +215,20 @@ const CreateContestForm = () => {
     const pad = num => String(num).padStart(2, '0');
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   }
+
+  const calculatePortfolioTarget = () => {
+    let portfolioTarget = 300000; // Default portfolio target
+    
+    if (formData.MatchType === 'Mahasangram' || formData.MatchType === 'Gold_Gala' || formData.MatchType === 'Silver_Summit' || formData.MatchType === 'Quick_Gainer_Challenge') {
+      if (formData.EntryFee === '1000' || formData.EntryFee === '500' || formData.EntryFee === '250') {
+        portfolioTarget = 400000;
+      } else if (formData.EntryFee === '200' || formData.EntryFee === '100' || formData.EntryFee === '50') {
+        portfolioTarget = 300000;
+      }
+    }
+  
+    return portfolioTarget;
+  };
 
   return (
     <div className="form-container">
@@ -325,6 +352,7 @@ const CreateContestForm = () => {
           <p>Fourth Prize: {formData.FourthPrize}</p>
           <p>Fifth Prize: {formData.FifthPrize}</p>
           <p>Prize Pool to Show: {formData.PrizePoolToShow}</p>
+          <p>Portfolio Target: {calculatePortfolioTarget()}</p> {/* Display portfolio target */}
         </div>
         <button type="submit" className="form-submit">Create Contest</button>
       </form>
