@@ -78,10 +78,16 @@ const Transactions = () => {
     }
   };
 
-  const formatAmount = (amount, type) => {
-    if (type === 1) {
+  // Updated formatAmount function to handle failed transactions before 30th August 2024
+  const formatAmount = (amount, type, transactionDate) => {
+    const cutoffDate = new Date("2024-08-30"); // 30th August 2024
+    const transactionDateObj = parseDate(transactionDate); // Convert to Date object
+
+    if (type === 1 && transactionDateObj < cutoffDate) {
+      // For failed transactions (type 1) before 30th August 2024, divide the amount by 100
       return (parseInt(amount) / 100).toString();
     }
+    // For other transactions or dates after the cutoff, show the amount as is
     return amount.toString();
   };
 
@@ -182,7 +188,7 @@ const Transactions = () => {
                 <td>{transaction.id}</td>
                 <td>{transaction.CustomerName}</td>
                 <td>{transaction.CustomerEmail}</td>
-                <td>{formatAmount(transaction.Amount, transaction._TranscationType)}</td>
+                <td>{formatAmount(transaction.Amount, transaction._TranscationType, transaction.InvoiceDate)}</td>
                 <td>{formatDisplayDate(transaction.InvoiceDate)}</td>
                 <td>{transaction.InvoiceNumber}</td>
                 <td>{transaction.TranscationTitle}</td>
