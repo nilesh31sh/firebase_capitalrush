@@ -23,6 +23,7 @@ const CreateContestForm = () => {
     PrizePoolToShow: '',
     ended: false,
     PrizePoolSuggested: '',
+    numberOfBots: 0,
     ContestName: '',
   });
   const [message, setMessage] = useState('');
@@ -32,6 +33,18 @@ const CreateContestForm = () => {
   useEffect(() => {
     calculatePrizes();
   }, [formData.Slots, formData.EntryFee, formData.PrizePoolSuggested]);
+
+  useEffect(() => {
+    calculateNumberofBots();
+  }, [formData.Slots, formData.EntryFee]);
+
+
+  const calculateNumberofBots = () => {
+    const rangeStart = formData.Slots / 3;
+    const rangeEnd = formData.Slots;
+    formData.numberOfBots = Math.floor(rangeStart + Math.random() * (rangeEnd - rangeStart));
+  };
+
 
   const calculatePrizes = () => {
     if (!formData.Slots || !formData.EntryFee || !formData.PrizePoolSuggested) return;
@@ -115,18 +128,18 @@ const CreateContestForm = () => {
       EntryFee: prevFormData.EntryFee ? Math.round(prevFormData.EntryFee / 10) * 10 : ''
     }));
   };
-
   const pickRandomUsers = async (ContestID, callback) => {
     const response = await fetch('/UserName.csv');
     const text = await response.text();
     const users = text.split(/\r?\n/);
 
-    const numberOfBots = Math.floor(Math.random() * (formData.Slots - formData.Slots / 3) + formData.Slots / 3);
+    //const numberOfBots = Math.floor(Math.random() * (formData.Slots - formData.Slots / 3) + formData.Slots / 3);
+
     const selectedUsers = [];
     const selectedIndices = [];
     const IndicesLeft = Array.from({ length: users.length - 1 }, (_, i) => i);
 
-    while (IndicesLeft.length > 0 && selectedIndices.length < numberOfBots) {
+    while (IndicesLeft.length > 0 && selectedIndices.length < formData.numberOfBots) {
       const randomIndex = Math.floor(Math.random() * IndicesLeft.length);
       selectedIndices.push(IndicesLeft[randomIndex]);
       IndicesLeft.splice(randomIndex, 1);
@@ -346,6 +359,7 @@ const CreateContestForm = () => {
         <div className="prizes-container">
           <h3>Prize Distribution</h3>
           <p>Prize Pool Suggested: {formData.PrizePoolSuggested}</p>
+          <p>Number of Bots Generated: {formData.numberOfBots}</p>
           <p>First Prize: {formData.FirstPrize}</p>
           <p>Second Prize: {formData.SecondPrize}</p>
           <p>Third Prize: {formData.ThirdPrize}</p>
